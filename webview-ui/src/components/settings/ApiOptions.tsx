@@ -534,8 +534,14 @@ const ApiOptions = ({
 					pull llama3`).
 				</div>
 				{showOllamaEmptyState && (
-					<div className="mt-2 text-xs text-vscode-errorForeground">
-						No Ollama models found. Start the daemon and pull a model, then refresh.
+					<div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-vscode-errorForeground">
+						<span>No Ollama models found. Start the daemon and pull a model, then refresh.</span>
+						<Button
+							variant="secondary"
+							size="sm"
+							onClick={() => vscode.postMessage({ type: "requestOllamaModels" })}>
+							Refresh Ollama Models
+						</Button>
 					</div>
 				)}
 				<div className="mt-3">
