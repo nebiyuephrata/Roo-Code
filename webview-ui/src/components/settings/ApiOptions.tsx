@@ -354,6 +354,24 @@ const ApiOptions = ({
 	}, [apiConfiguration, customHeaders, selectedProvider])
 	const connectionTestMessageClass =
 		connectionTest.status === "error" ? "text-vscode-errorForeground" : "text-vscode-descriptionForeground"
+	const providerBaseUrl = (() => {
+		switch (selectedProvider) {
+			case "ollama":
+				return apiConfiguration?.ollamaBaseUrl
+			case "lmstudio":
+				return apiConfiguration?.lmStudioBaseUrl
+			case "openai":
+				return apiConfiguration?.openAiBaseUrl
+			case "openrouter":
+				return apiConfiguration?.openRouterBaseUrl
+			case "requesty":
+				return apiConfiguration?.requestyBaseUrl
+			case "litellm":
+				return apiConfiguration?.litellmBaseUrl
+			default:
+				return undefined
+		}
+	})()
 
 	const { data: openRouterModelProviders } = useOpenRouterModelProviders(
 		apiConfiguration?.openRouterModelId,
@@ -694,6 +712,10 @@ const ApiOptions = ({
 							{connectionTest.message || "Connection test complete."}
 						</span>
 					)}
+				</div>
+				<div className="mt-2 text-xs text-vscode-descriptionForeground">
+					Provider: {selectedProvider}
+					{providerBaseUrl ? ` • Base URL: ${providerBaseUrl}` : ""}
 				</div>
 			</div>
 			<div className="flex flex-col gap-1 relative">
