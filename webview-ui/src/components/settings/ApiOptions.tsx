@@ -108,26 +108,49 @@ import { RooBalanceDisplay } from "./providers/RooBalanceDisplay"
 import { buildDocLink } from "@src/utils/docLinks"
 import { BookOpenText } from "lucide-react"
 
-const QUICK_API_KEY_FIELD_BY_PROVIDER: Partial<Record<ProviderName, keyof ProviderSettings>> = {
-	anthropic: "apiKey",
-	openrouter: "openRouterApiKey",
-	openai: "openAiApiKey",
-	"openai-native": "openAiNativeApiKey",
-	mistral: "mistralApiKey",
-	deepseek: "deepSeekApiKey",
-	gemini: "geminiApiKey",
-	moonshot: "moonshotApiKey",
-	minimax: "minimaxApiKey",
-	requesty: "requestyApiKey",
-	xai: "xaiApiKey",
-	litellm: "litellmApiKey",
-	sambanova: "sambaNovaApiKey",
-	zai: "zaiApiKey",
-	fireworks: "fireworksApiKey",
-	roo: "rooApiKey",
-	"vercel-ai-gateway": "vercelAiGatewayApiKey",
-	baseten: "basetenApiKey",
-	ollama: "ollamaApiKey",
+function getQuickApiKeyField(provider?: ProviderName): keyof ProviderSettings | undefined {
+	switch (provider) {
+		case "anthropic":
+			return "apiKey"
+		case "openrouter":
+			return "openRouterApiKey"
+		case "openai":
+			return "openAiApiKey"
+		case "openai-native":
+			return "openAiNativeApiKey"
+		case "mistral":
+			return "mistralApiKey"
+		case "deepseek":
+			return "deepSeekApiKey"
+		case "gemini":
+			return "geminiApiKey"
+		case "moonshot":
+			return "moonshotApiKey"
+		case "minimax":
+			return "minimaxApiKey"
+		case "requesty":
+			return "requestyApiKey"
+		case "xai":
+			return "xaiApiKey"
+		case "litellm":
+			return "litellmApiKey"
+		case "sambanova":
+			return "sambaNovaApiKey"
+		case "zai":
+			return "zaiApiKey"
+		case "fireworks":
+			return "fireworksApiKey"
+		case "roo":
+			return "rooApiKey"
+		case "vercel-ai-gateway":
+			return "vercelAiGatewayApiKey"
+		case "baseten":
+			return "basetenApiKey"
+		case "ollama":
+			return "ollamaApiKey"
+		default:
+			return undefined
+	}
 }
 
 export interface ApiOptionsProps {
@@ -208,7 +231,7 @@ const ApiOptions = ({
 		: selectedProvider
 	const isRetiredSelectedProvider =
 		typeof apiConfiguration.apiProvider === "string" && isRetiredProvider(apiConfiguration.apiProvider)
-	const quickApiKeyField = QUICK_API_KEY_FIELD_BY_PROVIDER[activeSelectedProvider ?? selectedProvider]
+	const quickApiKeyField = getQuickApiKeyField(activeSelectedProvider ?? selectedProvider)
 
 	const { data: routerModels, refetch: refetchRouterModels } = useRouterModels()
 
