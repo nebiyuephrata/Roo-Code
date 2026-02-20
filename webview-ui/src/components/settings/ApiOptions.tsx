@@ -233,7 +233,9 @@ const ApiOptions = ({
 		typeof apiConfiguration.apiProvider === "string" && isRetiredProvider(apiConfiguration.apiProvider)
 	const quickApiKeyField = getQuickApiKeyField(activeSelectedProvider ?? selectedProvider)
 
-	const { data: routerModels, refetch: refetchRouterModels } = useRouterModels()
+	const { data: routerModels, refetch: refetchRouterModels, isFetching: isFetchingRouterModels } = useRouterModels()
+	const ollamaModelCount = routerModels?.ollama ? Object.keys(routerModels.ollama).length : 0
+	const showOllamaEmptyState = selectedProvider === "ollama" && !isFetchingRouterModels && ollamaModelCount === 0
 
 	const { data: openRouterModelProviders } = useOpenRouterModelProviders(
 		apiConfiguration?.openRouterModelId,
@@ -531,6 +533,11 @@ const ApiOptions = ({
 					Ollama requires a local daemon and at least one model installed (e.g. run `ollama serve` and `ollama
 					pull llama3`).
 				</div>
+				{showOllamaEmptyState && (
+					<div className="mt-2 text-xs text-vscode-errorForeground">
+						No Ollama models found. Start the daemon and pull a model, then refresh.
+					</div>
+				)}
 				<div className="mt-3">
 					{quickApiKeyField ? (
 						<VSCodeTextField
