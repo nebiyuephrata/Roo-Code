@@ -7,6 +7,7 @@ import { ExternalLinkIcon } from "@radix-ui/react-icons"
 import {
 	type ProviderName,
 	type ProviderSettings,
+	type ExtensionMessage,
 	isRetiredProvider,
 	DEFAULT_CONSECUTIVE_MISTAKE_LIMIT,
 	openRouterDefaultModelId,
@@ -232,10 +233,127 @@ const ApiOptions = ({
 	const isRetiredSelectedProvider =
 		typeof apiConfiguration.apiProvider === "string" && isRetiredProvider(apiConfiguration.apiProvider)
 	const quickApiKeyField = getQuickApiKeyField(activeSelectedProvider ?? selectedProvider)
+	const [connectionTest, setConnectionTest] = useState<{
+		status: "idle" | "pending" | "success" | "error"
+		message?: string
+	}>({ status: "idle" })
 
 	const { data: routerModels, refetch: refetchRouterModels, isFetching: isFetchingRouterModels } = useRouterModels()
 	const ollamaModelCount = routerModels?.ollama ? Object.keys(routerModels.ollama).length : 0
 	const showOllamaEmptyState = selectedProvider === "ollama" && !isFetchingRouterModels && ollamaModelCount === 0
+
+	useEffect(() => {
+		setConnectionTest({ status: "idle" })
+	}, [selectedProvider])
+
+	const runConnectionTest = useCallback(() => {
+		const provider = selectedProvider
+
+		if (provider === "openai") {
+			if (!apiConfiguration?.openAiBaseUrl || !apiConfiguration?.openAiApiKey) {
+				setConnectionTest({
+					status: "error",
+					message: "OpenAI base URL and API key are required to test.",
+				})
+				return
+			}
+		}
+
+		if (provider === "openai-codex") {
+			setConnectionTest({
+				status: "error",
+				message: "OpenAI Codex connection testing is not supported here yet.",
+			})
+			return
+		}
+
+		setConnectionTest({ status: "pending", message: "Testing connection..." })
+
+		const handler = (event: MessageEvent) => {
+			const message = event.data as ExtensionMessage
+			if (!message || typeof message !== "object") return
+
+			switch (message.type) {
+				case "openAiModels":
+					if (provider === "openai") {
+						finish("success", "Connected to OpenAI.")
+					}
+					break
+				case "routerModels": {
+					const msgProvider = message?.values?.provider as string | undefined
+					if (msgProvider !== provider) {
+						return
+					}
+					const providerModels = message.routerModels?.[provider as keyof typeof message.routerModels] || {}
+					const count = Object.keys(providerModels).length
+					if (count > 0) {
+						finish("success", `Connected. ${count} model${count === 1 ? "" : "s"} found.`)
+					} else {
+						finish("error", "Connected, but no models were returned.")
+					}
+					break
+				}
+				case "singleRouterModelFetchResponse": {
+					const msgProvider = message?.values?.provider as string | undefined
+					if (msgProvider !== provider || message.success !== false) {
+						return
+					}
+					finish("error", message.error || "Failed to fetch models.")
+					break
+				}
+				case "ollamaModels":
+					if (provider === "ollama") {
+						const count = Object.keys(message.ollamaModels ?? {}).length
+						finish("success", `Connected. ${count} model${count === 1 ? "" : "s"} found.`)
+					}
+					break
+				case "lmStudioModels":
+					if (provider === "lmstudio") {
+						const count = Object.keys(message.lmStudioModels ?? {}).length
+						finish("success", `Connected. ${count} model${count === 1 ? "" : "s"} found.`)
+					}
+					break
+				case "vsCodeLmModels":
+					if (provider === "vscode-lm") {
+						const count = Object.keys(message.vsCodeLmModels ?? {}).length
+						finish("success", `Connected. ${count} model${count === 1 ? "" : "s"} found.`)
+					}
+					break
+			}
+		}
+
+		const timeoutId = setTimeout(() => {
+			finish("error", "Connection test timed out.")
+		}, 8000)
+		const cleanup = () => {
+			clearTimeout(timeoutId)
+			window.removeEventListener("message", handler)
+		}
+		const finish = (status: "success" | "error", message: string) => {
+			cleanup()
+			setConnectionTest({ status, message })
+		}
+
+		window.addEventListener("message", handler)
+
+		if (provider === "openai") {
+			const headerObject = convertHeadersToObject(customHeaders)
+			vscode.postMessage({
+				type: "requestOpenAiModels",
+				values: {
+					baseUrl: apiConfiguration?.openAiBaseUrl,
+					apiKey: apiConfiguration?.openAiApiKey,
+					customHeaders: {},
+					openAiHeaders: headerObject,
+				},
+			})
+			return
+		}
+
+		vscode.postMessage({ type: "requestRouterModels", values: { provider, refresh: true } })
+	}, [apiConfiguration, customHeaders, selectedProvider])
+	const connectionTestMessageClass =
+		connectionTest.status === "error" ? "text-vscode-errorForeground" : "text-vscode-descriptionForeground"
 
 	const { data: openRouterModelProviders } = useOpenRouterModelProviders(
 		apiConfiguration?.openRouterModelId,
@@ -561,6 +679,20 @@ const ApiOptions = ({
 						<div className="text-xs text-vscode-descriptionForeground">
 							Selected provider does not require an API key.
 						</div>
+					)}
+				</div>
+				<div className="mt-3 flex flex-wrap items-center gap-2">
+					<Button
+						variant="secondary"
+						size="sm"
+						onClick={runConnectionTest}
+						disabled={connectionTest.status === "pending"}>
+						{connectionTest.status === "pending" ? "Testing..." : "Test Connection"}
+					</Button>
+					{connectionTest.status !== "idle" && (
+						<span className={`text-xs ${connectionTestMessageClass}`}>
+							{connectionTest.message || "Connection test complete."}
+						</span>
 					)}
 				</div>
 			</div>
