@@ -527,6 +527,10 @@ const ApiOptions = ({
 						Use OpenAI-Compatible
 					</Button>
 				</div>
+				<div className="mt-2 text-xs text-vscode-descriptionForeground">
+					Ollama requires a local daemon and at least one model installed (e.g. run `ollama serve` and `ollama
+					pull llama3`).
+				</div>
 				<div className="mt-3">
 					{quickApiKeyField ? (
 						<VSCodeTextField
