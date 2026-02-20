@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from "react"
 import { convertHeadersToObject } from "./utils/headers"
 import { useDebounce } from "react-use"
-import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
+import { VSCodeLink, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import { ExternalLinkIcon } from "@radix-ui/react-icons"
 
 import {
@@ -62,6 +62,7 @@ import {
 	Collapsible,
 	CollapsibleTrigger,
 	CollapsibleContent,
+	Button,
 } from "@src/components/ui"
 
 import {
@@ -106,6 +107,28 @@ import { BedrockCustomArn } from "./providers/BedrockCustomArn"
 import { RooBalanceDisplay } from "./providers/RooBalanceDisplay"
 import { buildDocLink } from "@src/utils/docLinks"
 import { BookOpenText } from "lucide-react"
+
+const QUICK_API_KEY_FIELD_BY_PROVIDER: Partial<Record<ProviderName, keyof ProviderSettings>> = {
+	anthropic: "apiKey",
+	openrouter: "openRouterApiKey",
+	openai: "openAiApiKey",
+	"openai-native": "openAiNativeApiKey",
+	mistral: "mistralApiKey",
+	deepseek: "deepSeekApiKey",
+	gemini: "geminiApiKey",
+	moonshot: "moonshotApiKey",
+	minimax: "minimaxApiKey",
+	requesty: "requestyApiKey",
+	xai: "xaiApiKey",
+	litellm: "litellmApiKey",
+	sambanova: "sambaNovaApiKey",
+	zai: "zaiApiKey",
+	fireworks: "fireworksApiKey",
+	roo: "rooApiKey",
+	"vercel-ai-gateway": "vercelAiGatewayApiKey",
+	baseten: "basetenApiKey",
+	ollama: "ollamaApiKey",
+}
 
 export interface ApiOptionsProps {
 	uriScheme: string | undefined
@@ -185,6 +208,7 @@ const ApiOptions = ({
 		: selectedProvider
 	const isRetiredSelectedProvider =
 		typeof apiConfiguration.apiProvider === "string" && isRetiredProvider(apiConfiguration.apiProvider)
+	const quickApiKeyField = QUICK_API_KEY_FIELD_BY_PROVIDER[activeSelectedProvider ?? selectedProvider]
 
 	const { data: routerModels, refetch: refetchRouterModels } = useRouterModels()
 
@@ -456,6 +480,50 @@ const ApiOptions = ({
 
 	return (
 		<div className="flex flex-col gap-3">
+			<div className="rounded-md border border-vscode-panel-border px-3 py-2">
+				<div className="text-xs font-semibold uppercase text-vscode-descriptionForeground">Quick setup</div>
+				<div className="mt-2 flex flex-wrap gap-2">
+					<Button
+						variant="secondary"
+						size="sm"
+						onClick={() => {
+							setApiConfigurationField("apiProvider", "ollama")
+							if (!apiConfiguration.ollamaBaseUrl) {
+								setApiConfigurationField("ollamaBaseUrl", "http://localhost:11434")
+							}
+							vscode.postMessage({ type: "requestOllamaModels" })
+						}}>
+						Use Ollama (Local)
+					</Button>
+					<Button
+						variant="secondary"
+						size="sm"
+						onClick={() => {
+							setApiConfigurationField("apiProvider", "openai")
+						}}>
+						Use OpenAI-Compatible
+					</Button>
+				</div>
+				<div className="mt-3">
+					{quickApiKeyField ? (
+						<VSCodeTextField
+							value={(apiConfiguration as Record<string, string | undefined>)[quickApiKeyField] || ""}
+							type="password"
+							onInput={handleInputChange(quickApiKeyField)}
+							placeholder={t("settings:placeholders.apiKey")}
+							className="w-full">
+							<label className="block font-medium mb-1">Quick API Key</label>
+							<div className="text-xs text-vscode-descriptionForeground mt-1">
+								Sets the API key for the currently selected provider.
+							</div>
+						</VSCodeTextField>
+					) : (
+						<div className="text-xs text-vscode-descriptionForeground">
+							Selected provider does not require an API key.
+						</div>
+					)}
+				</div>
+			</div>
 			<div className="flex flex-col gap-1 relative">
 				<div className="flex justify-between items-center">
 					<label className="block font-medium">{t("settings:providers.apiProvider")}</label>
