@@ -30,7 +30,7 @@ function traceStatusClass(status?: string): string {
 }
 
 export const GovernanceStatusPanel = () => {
-	const { governanceStatus } = useExtensionState()
+	const { governanceStatus, governanceTraceCount } = useExtensionState()
 	const activeIntentLabel = useMemo(() => {
 		if (!governanceStatus?.activeIntentId) {
 			return "No active intent"
@@ -75,6 +75,9 @@ export const GovernanceStatusPanel = () => {
 							{governanceStatus?.lastTraceStatus ?? "n/a"}
 						</span>
 						{governanceStatus?.lastToolName ? ` • ${governanceStatus.lastToolName}` : ""}
+					</div>
+					<div className="text-xs text-vscode-descriptionForeground">
+						Trace entries: {typeof governanceTraceCount === "number" ? governanceTraceCount : "n/a"}
 					</div>
 					<div className="text-xs text-vscode-descriptionForeground">
 						{formatDate(governanceStatus?.lastTraceAt)}

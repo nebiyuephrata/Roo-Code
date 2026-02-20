@@ -392,6 +392,7 @@ export type ExtensionState = Pick<
 	debug?: boolean
 	governanceStatus?: GovernanceStatus
 	governanceTraceEntries?: GovernanceTraceEntry[]
+	governanceTraceCount?: number
 
 	/**
 	 * Monotonically increasing sequence number for clineMessages state pushes.
