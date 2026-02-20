@@ -108,7 +108,7 @@ import { RooBalanceDisplay } from "./providers/RooBalanceDisplay"
 import { buildDocLink } from "@src/utils/docLinks"
 import { BookOpenText } from "lucide-react"
 
-function getQuickApiKeyField(provider?: ProviderName): keyof ProviderSettings | undefined {
+function getQuickApiKeyField(provider?: string): keyof ProviderSettings | undefined {
 	switch (provider) {
 		case "anthropic":
 			return "apiKey"
