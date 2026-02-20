@@ -2189,6 +2189,7 @@ export class ClineProvider
 		const cwd = this.cwd
 		const governanceStatus = await getGovernanceStatusSnapshot(cwd)
 		const governanceTraceEntries = await getGovernanceTraceEntries(cwd, 120)
+		const governanceTraceCount = governanceTraceEntries.length
 
 		return {
 			version: this.context.extension?.packageJSON?.version ?? "",
@@ -2321,6 +2322,7 @@ export class ClineProvider
 			debug: vscode.workspace.getConfiguration(Package.name).get<boolean>("debug", false),
 			governanceStatus,
 			governanceTraceEntries,
+			governanceTraceCount,
 		}
 	}
 
