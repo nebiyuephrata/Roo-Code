@@ -42,8 +42,9 @@ export const parseOllamaModel = (rawModel: OllamaModelInfoResponse): ModelInfo |
 	const contextWindow =
 		contextKey && typeof rawModel.model_info[contextKey] === "number" ? rawModel.model_info[contextKey] : undefined
 
-	// Filter out models that don't support tools. Models without tool capability won't work.
-	const supportsTools = rawModel.capabilities?.includes("tools") ?? false
+	// Some Ollama builds omit capability metadata; treat missing metadata as compatible.
+	// If capabilities are explicitly present, still require native tool support.
+	const supportsTools = rawModel.capabilities ? rawModel.capabilities.includes("tools") : true
 	if (!supportsTools) {
 		return null
 	}
