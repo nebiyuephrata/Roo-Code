@@ -661,18 +661,22 @@ export class ClineProvider
 			return
 		}
 		const root = vscode.Uri.file(cwd)
-		const patterns = [
-			".orchestration/agent_trace.jsonl",
-			".orchestration/active_intent.json",
-			".orchestration/active_intents.yaml",
-		]
-		for (const pattern of patterns) {
-			const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(root, pattern))
-			this.governanceWatchDisposables.push(watcher)
-			this.governanceWatchDisposables.push(watcher.onDidCreate(() => this.scheduleGovernanceRefresh()))
-			this.governanceWatchDisposables.push(watcher.onDidChange(() => this.scheduleGovernanceRefresh()))
-			this.governanceWatchDisposables.push(watcher.onDidDelete(() => this.scheduleGovernanceRefresh()))
+		const watchedFiles = new Set(["agent_trace.jsonl", "active_intent.json", "active_intents.yaml"])
+		const watcher = vscode.workspace.createFileSystemWatcher(
+			new vscode.RelativePattern(root, ".orchestration/**/*"),
+		)
+		const onGovernanceFileEvent = (uri: vscode.Uri) => {
+			const fileName = path.basename(uri.fsPath)
+			if (!watchedFiles.has(fileName)) {
+				return
+			}
+			this.scheduleGovernanceRefresh()
 		}
+		this.governanceWatchDisposables.push(watcher)
+		this.governanceWatchDisposables.push(watcher.onDidCreate(onGovernanceFileEvent))
+		this.governanceWatchDisposables.push(watcher.onDidChange(onGovernanceFileEvent))
+		this.governanceWatchDisposables.push(watcher.onDidDelete(onGovernanceFileEvent))
+		this.scheduleGovernanceRefresh()
 	}
 
 	async dispose() {
