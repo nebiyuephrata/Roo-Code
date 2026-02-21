@@ -4,6 +4,7 @@ import { appendTraceRecord, buildTraceRecord, hashArgs, summarizeArgs, resolveVc
 import { updateIntentStatus } from "./intentLoader"
 import { updateIntentMap } from "./intentMapUpdater"
 import { recordCompactEntry } from "./preCompact"
+import { buildSpatialRanges } from "./spatialTrace"
 import type { SemanticMutationClass } from "./mutationClassifier"
 
 import type { PreToolResult } from "./preToolUse"
@@ -83,13 +84,6 @@ function shouldUpdateIntentMap(context: PostToolContext, semanticMutationClass?:
 	return context.args.__file_existed === false
 }
 
-function countLines(value: string): number {
-	if (value.length === 0) {
-		return 0
-	}
-	return value.split(/\r?\n/).length
-}
-
 export async function postToolUse(context: PostToolContext): Promise<void> {
 	try {
 		const related = Array.isArray(context.args.related)
@@ -99,11 +93,7 @@ export async function postToolUse(context: PostToolContext): Promise<void> {
 			related.push(context.pre.intentId)
 		}
 
-		let contentHash: string | undefined
-		const content = context.args.content
-		if (typeof content === "string") {
-			contentHash = sha256(content)
-		}
+		const content = typeof context.args.content === "string" ? context.args.content : undefined
 		const semanticMutationClass =
 			typeof context.args.__semantic_mutation_class === "string"
 				? (context.args.__semantic_mutation_class as SemanticMutationClass)
@@ -120,15 +110,8 @@ export async function postToolUse(context: PostToolContext): Promise<void> {
 		const relativePath =
 			typeof context.args.__relative_path === "string" ? String(context.args.__relative_path) : undefined
 		const ranges =
-			typeof content === "string" && content.length > 0
-				? [
-						{
-							start_line: 1,
-							end_line: Math.max(1, countLines(content)),
-							content_hash: `sha256:${sha256(content)}`,
-						},
-					]
-				: []
+			typeof content === "string" ? buildSpatialRanges(context.args.__old_content ?? null, content) : []
+		const contentHash = ranges.length > 0 ? sha256(ranges.map((range) => range.content_hash).join("|")) : undefined
 		const conversationRelated = [
 			...(context.pre.intentId ? [{ type: "specification" as const, value: context.pre.intentId }] : []),
 			...related.map((value) => ({ type: "trace" as const, value })),
