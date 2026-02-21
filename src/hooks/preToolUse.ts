@@ -12,6 +12,7 @@ import {
 import { sanitizeAndNormalizePath, validatePathAgainstScope } from "./scopeValidator"
 import { inferSemanticMutationClass, isMutationClassCompatible, type SemanticMutationClass } from "./mutationClassifier"
 import { preCompact } from "./preCompact"
+import { resolveIntentForToolCall } from "./autoIntentResolver"
 
 const fileReadTools = new Set(["read_file"])
 const fileWriteTools = new Set([
@@ -37,6 +38,7 @@ export interface PreToolContext {
 	cwd: string
 	toolName: string
 	args: Record<string, any>
+	intentHintText?: string
 }
 
 export interface PreToolResult {
@@ -89,7 +91,8 @@ export async function preToolUse(context: PreToolContext): Promise<PreToolResult
 
 	await preCompact(context.taskId, context.cwd).catch(() => undefined)
 
-	if (!canProceed(context.taskId)) {
+	const isRecoveryTool = context.toolName === "select_active_intent"
+	if (!canProceed(context.taskId) && !isRecoveryTool) {
 		return {
 			ok: false,
 			intentId: null,
@@ -145,8 +148,9 @@ export async function preToolUse(context: PreToolContext): Promise<PreToolResult
 		}
 	}
 
+	let catalog
 	try {
-		await loadIntentCatalog(context.cwd)
+		catalog = await loadIntentCatalog(context.cwd)
 	} catch (error) {
 		const e = error as IntentLoadError
 		return {
@@ -161,19 +165,44 @@ export async function preToolUse(context: PreToolContext): Promise<PreToolResult
 		}
 	}
 
-	const selectedIntent = await getSelectedIntent(context.taskId, context.cwd)
+	let selectedIntent = await getSelectedIntent(context.taskId, context.cwd)
 	if (!selectedIntent) {
+		const resolved = resolveIntentForToolCall({
+			cwd: context.cwd,
+			toolName: context.toolName,
+			args: normalizedArgs,
+			intents: catalog.intents,
+			intentHintText: context.intentHintText,
+		})
+		if (resolved.intent) {
+			selectedIntent = await selectActiveIntent(context.taskId, context.cwd, resolved.intent.id)
+		}
+	}
+	if (!selectedIntent) {
+		const resolved = resolveIntentForToolCall({
+			cwd: context.cwd,
+			toolName: context.toolName,
+			args: normalizedArgs,
+			intents: catalog.intents,
+			intentHintText: context.intentHintText,
+		})
 		return {
 			ok: false,
 			intentId: null,
 			approved: null,
-			decisionReason: "No active intent selected. Call select_active_intent(intent_id) first.",
+			decisionReason:
+				"No active intent selected. Auto-resolution was ambiguous; call select_active_intent(intent_id) first.",
 			securityClass,
 			startedAt,
 			normalizedArgs,
 			errorPayload: hookError(
 				"HANDSHAKE_REQUIRED",
 				"All tools except select_active_intent require an active intent selection.",
+				{
+					auto_resolution_reason: resolved.reason,
+					confidence: resolved.confidence,
+					candidates: resolved.candidates,
+				},
 			),
 		}
 	}
