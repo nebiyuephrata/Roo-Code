@@ -291,11 +291,11 @@ const WelcomeViewProvider = () => {
 	if (selectedProvider === null) {
 		return (
 			<Tab>
-				<TabContent className="relative flex flex-col gap-4 p-6 justify-center">
+				<TabContent className="relative flex flex-col gap-5 p-6 justify-center items-center text-center">
 					<RooHero />
-					<h2 className="mt-0 mb-0 text-xl">{t("welcome:landing.greeting")}</h2>
+					<h2 className="mt-0 mb-0 text-2xl font-semibold">{t("welcome:landing.greeting")}</h2>
 
-					<div className="space-y-4 leading-normal">
+					<div className="space-y-4 leading-normal max-w-xl">
 						<p className="text-base text-vscode-foreground">
 							<Trans i18nKey="welcome:landing.introduction" />
 						</p>
@@ -304,7 +304,7 @@ const WelcomeViewProvider = () => {
 						</p>
 					</div>
 
-					<div className="mt-2 flex gap-2 items-center">
+					<div className="mt-2 flex gap-3 items-center justify-center">
 						<Button onClick={handleGetStarted} variant="primary">
 							{t("welcome:landing.getStarted")}
 						</Button>

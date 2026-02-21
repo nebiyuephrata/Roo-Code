@@ -13,7 +13,7 @@
 		}
 	},
 	"landing": {
-		"greeting": "Welcome to Rataz AI!",
+		"greeting": "Welcome to Rataz AI (ራታዝ)!",
 		"introduction": "Rataz AI is an Ethiopian-built, governed AI-native IDE that helps you plan, architect, code, and debug with clear intent and traceability.",
 		"accountMention": "To get started, create your Rataz AI account. Get powerful models, web control, analytics, support and more.",
 		"getStarted": "Create Rataz Account",
