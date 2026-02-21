@@ -987,15 +987,32 @@ export const webviewMessageHandler = async (
 			// Specific handler for Ollama models only.
 			const { apiConfiguration: ollamaApiConfig } = await provider.getState()
 			try {
+				const primaryBaseUrl = ollamaApiConfig.ollamaBaseUrl || "http://127.0.0.1:11434"
 				const ollamaOptions = {
 					provider: "ollama" as const,
-					baseUrl: ollamaApiConfig.ollamaBaseUrl || "http://127.0.0.1:11434",
+					baseUrl: primaryBaseUrl,
 					apiKey: ollamaApiConfig.ollamaApiKey,
 				}
 				// Flush cache and refresh to ensure fresh models.
 				await flushModels(ollamaOptions, true)
 
-				const ollamaModels = await getModels(ollamaOptions)
+				let ollamaModels = await getModels(ollamaOptions)
+
+				// Retry loopback hostname variants for environments where localhost resolves to IPv6 only.
+				if (Object.keys(ollamaModels).length === 0) {
+					const retryBaseUrl = primaryBaseUrl.includes("localhost")
+						? primaryBaseUrl.replace("localhost", "127.0.0.1")
+						: primaryBaseUrl.includes("127.0.0.1")
+							? primaryBaseUrl.replace("127.0.0.1", "localhost")
+							: undefined
+
+					if (retryBaseUrl) {
+						const retryOptions = { ...ollamaOptions, baseUrl: retryBaseUrl }
+						await flushModels(retryOptions, true)
+						ollamaModels = await getModels(retryOptions)
+					}
+				}
+
 				provider.postMessageToWebview({ type: "ollamaModels", ollamaModels: ollamaModels })
 			} catch (error) {
 				console.debug("Ollama models fetch failed:", error)

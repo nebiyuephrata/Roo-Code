@@ -32,6 +32,58 @@ interface ActiveIntentSelection {
 const intentCache = new Map<string, CacheEntry>()
 const selectedIntentByTask = new Map<string, string>()
 const SELECTED_INTENT_SENTINEL_TASK = "__command_context__"
+const DEFAULT_INTENT_CATALOG: IntentFileShape = {
+	intents: [
+		{
+			id: "INT-GEN-001",
+			title: "Architecture and Planning",
+			description: "Define architecture boundaries, contracts, and implementation plan.",
+			scope: ["src/**", "docs/**", "*.md"],
+			acceptanceCriteria: ["Architecture notes are updated", "Implementation plan is explicit"],
+			status: "IN_PROGRESS",
+		},
+		{
+			id: "INT-GEN-002",
+			title: "Core Feature Delivery",
+			description: "Implement core product behavior in application logic.",
+			scope: ["src/**", "app/**", "lib/**"],
+			acceptanceCriteria: ["Feature behavior matches request", "Backward compatibility is preserved"],
+			status: "PLANNED",
+		},
+		{
+			id: "INT-GEN-003",
+			title: "Frontend and UX",
+			description: "Implement UI/UX flows, accessibility, and interaction quality.",
+			scope: ["web/**", "webview-ui/**", "frontend/**", "ui/**", "src/**/*.tsx", "src/**/*.css"],
+			acceptanceCriteria: ["UI flow is usable", "No accessibility regressions in changed UI"],
+			status: "PLANNED",
+		},
+		{
+			id: "INT-GEN-004",
+			title: "Quality and Verification",
+			description: "Add or update tests, lint compliance, and verification routines.",
+			scope: ["tests/**", "src/**", ".github/workflows/**", "vitest.*", "jest.*"],
+			acceptanceCriteria: ["Relevant tests pass", "Lint/type checks pass for changed scope"],
+			status: "PLANNED",
+		},
+		{
+			id: "INT-GEN-005",
+			title: "Infrastructure and Delivery",
+			description: "Maintain CI/CD, deployment config, and runtime environment behavior.",
+			scope: ["infra/**", "deploy/**", "docker/**", ".github/**", "*.yml", "*.yaml"],
+			acceptanceCriteria: ["Pipeline config is valid", "Deployment/runtime config remains stable"],
+			status: "PLANNED",
+		},
+		{
+			id: "INT-GEN-006",
+			title: "Documentation and Onboarding",
+			description: "Update docs, setup guides, and developer onboarding materials.",
+			scope: ["docs/**", "README.md", "ARCHITECTURE_NOTES.md", ".orchestration/**"],
+			acceptanceCriteria: ["Docs reflect implementation changes", "Onboarding steps are reproducible"],
+			status: "PLANNED",
+		},
+	],
+}
 
 export class IntentLoadError extends Error {
 	constructor(
@@ -118,11 +170,18 @@ export async function loadIntentCatalog(cwd: string): Promise<IntentFileShape> {
 		stat = await fs.stat(target)
 	} catch (error: any) {
 		if (error?.code === "ENOENT") {
-			throw new IntentLoadError("INTENT_FILE_MISSING", "Missing .orchestration/active_intents.yaml", {
-				path: target,
-			})
+			// Fallback: materialize a bundled default catalog into the active workspace.
+			// This keeps governance functional for first-time workspaces without manual setup.
+			await ensureIntentCatalogFile(cwd)
+			try {
+				stat = await fs.stat(target)
+			} catch {
+				// If write failed (permissions, readonly workspace, etc.), continue with in-memory defaults.
+				return DEFAULT_INTENT_CATALOG
+			}
+		} else {
+			throw error
 		}
-		throw error
 	}
 
 	const cached = intentCache.get(target)
@@ -279,58 +338,6 @@ export async function ensureIntentCatalogFile(cwd: string): Promise<void> {
 		if (error?.code !== "ENOENT") {
 			throw error
 		}
-		const example: IntentFileShape = {
-			intents: [
-				{
-					id: "INT-GEN-001",
-					title: "Architecture and Planning",
-					description: "Define architecture boundaries, contracts, and implementation plan.",
-					scope: ["src/**", "docs/**", "*.md"],
-					acceptanceCriteria: ["Architecture notes are updated", "Implementation plan is explicit"],
-					status: "IN_PROGRESS",
-				},
-				{
-					id: "INT-GEN-002",
-					title: "Core Feature Delivery",
-					description: "Implement core product behavior in application logic.",
-					scope: ["src/**", "app/**", "lib/**"],
-					acceptanceCriteria: ["Feature behavior matches request", "Backward compatibility is preserved"],
-					status: "PLANNED",
-				},
-				{
-					id: "INT-GEN-003",
-					title: "Frontend and UX",
-					description: "Implement UI/UX flows, accessibility, and interaction quality.",
-					scope: ["web/**", "webview-ui/**", "frontend/**", "ui/**", "src/**/*.tsx", "src/**/*.css"],
-					acceptanceCriteria: ["UI flow is usable", "No accessibility regressions in changed UI"],
-					status: "PLANNED",
-				},
-				{
-					id: "INT-GEN-004",
-					title: "Quality and Verification",
-					description: "Add or update tests, lint compliance, and verification routines.",
-					scope: ["tests/**", "src/**", ".github/workflows/**", "vitest.*", "jest.*"],
-					acceptanceCriteria: ["Relevant tests pass", "Lint/type checks pass for changed scope"],
-					status: "PLANNED",
-				},
-				{
-					id: "INT-GEN-005",
-					title: "Infrastructure and Delivery",
-					description: "Maintain CI/CD, deployment config, and runtime environment behavior.",
-					scope: ["infra/**", "deploy/**", "docker/**", ".github/**", "*.yml", "*.yaml"],
-					acceptanceCriteria: ["Pipeline config is valid", "Deployment/runtime config remains stable"],
-					status: "PLANNED",
-				},
-				{
-					id: "INT-GEN-006",
-					title: "Documentation and Onboarding",
-					description: "Update docs, setup guides, and developer onboarding materials.",
-					scope: ["docs/**", "README.md", "ARCHITECTURE_NOTES.md", ".orchestration/**"],
-					acceptanceCriteria: ["Docs reflect implementation changes", "Onboarding steps are reproducible"],
-					status: "PLANNED",
-				},
-			],
-		}
-		await fs.writeFile(target, stringify(example), "utf-8")
+		await fs.writeFile(target, stringify(DEFAULT_INTENT_CATALOG), "utf-8")
 	}
 }

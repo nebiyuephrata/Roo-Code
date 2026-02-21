@@ -26,7 +26,7 @@
 		"shareSuccessOrganization": "Organization link copied to clipboard",
 		"shareSuccessPublic": "Public link copied to clipboard",
 		"openInCloud": "Open task in Rataz AI Cloud",
-		"openInCloudIntro": "Keep monitoring or interacting with Roo from anywhere. Scan, click or copy to open.",
+		"openInCloudIntro": "Keep monitoring or interacting with ራታዝ from anywhere. Scan, click or copy to open.",
 		"openApiHistory": "Open API History",
 		"openUiHistory": "Open UI History",
 		"backToParentTask": "Parent task"
@@ -65,6 +65,10 @@
 	"approve": {
 		"title": "Approve",
 		"tooltip": "Allow this action to happen"
+	},
+	"approveAlwaysSession": {
+		"title": "Approve Always (Session)",
+		"tooltip": "Allow future read-only actions for this task without prompting"
 	},
 	"read-batch": {
 		"approve": {
@@ -123,7 +127,7 @@
 		"placeholder": "Edit your message..."
 	},
 	"scrollToBottom": "Scroll to bottom of chat",
-	"about": "Roo is a whole AI dev team in your editor",
+	"about": "ራታዝ is a whole AI dev team in your editor",
 	"docs": "Check our <DocsLink>docs</DocsLink> to get started",
 	"onboarding": "What would you like to do?",
 	"rooTips": {
@@ -133,7 +137,7 @@
 		},
 		"modelAgnostic": {
 			"title": "Bring your own model, no markup or lock-in",
-			"description": "Use your own provider key or even run local inference — Roo doesn't charge for it"
+			"description": "Use your own provider key or even run local inference — ራታዝ doesn't charge for it"
 		}
 	},
 	"selectMode": "Select mode for interaction",
@@ -145,7 +149,7 @@
 		"title": "Modes",
 		"marketplace": "Mode Marketplace",
 		"settings": "Mode Settings",
-		"description": "Specialized personas that tailor Roo's behavior.",
+		"description": "Specialized personas that tailor ራታዝ's behavior.",
 		"searchPlaceholder": "Search modes...",
 		"noResults": "No results found"
 	},
@@ -222,46 +226,46 @@
 		}
 	},
 	"skill": {
-		"wantsToLoad": "Roo wants to load a skill",
-		"didLoad": "Roo loaded a skill"
+		"wantsToLoad": "ራታዝ ክህሎት መጫን ይፈልጋል",
+		"didLoad": "ራታዝ ክህሎት ጫነ"
 	},
 	"fileOperations": {
-		"wantsToRead": "Roo wants to read this file",
-		"wantsToReadMultiple": "Roo wants to read multiple files",
-		"wantsToReadAndXMore": "Roo wants to read this file and {{count}} more",
-		"wantsToReadOutsideWorkspace": "Roo wants to read this file outside of the workspace",
-		"didRead": "Roo read this file",
-		"wantsToEdit": "Roo wants to edit this file",
-		"wantsToEditOutsideWorkspace": "Roo wants to edit this file outside of the workspace",
-		"wantsToEditProtected": "Roo wants to edit a protected configuration file",
-		"wantsToApplyBatchChanges": "Roo wants to apply changes to multiple files",
-		"wantsToGenerateImage": "Roo wants to generate an image",
-		"wantsToGenerateImageOutsideWorkspace": "Roo wants to generate an image outside of the workspace",
-		"wantsToGenerateImageProtected": "Roo wants to generate an image in a protected location",
-		"didGenerateImage": "Roo generated an image",
-		"wantsToCreate": "Roo wants to create a new file",
-		"wantsToInsert": "Roo wants to insert content into this file",
-		"wantsToInsertWithLineNumber": "Roo wants to insert content into this file at line {{lineNumber}}",
-		"wantsToInsertAtEnd": "Roo wants to append content to the end of this file"
+		"wantsToRead": "ራታዝ ይህን ፋይል ማንበብ ይፈልጋል",
+		"wantsToReadMultiple": "ራታዝ ብዙ ፋይሎች ማንበብ ይፈልጋል",
+		"wantsToReadAndXMore": "ራታዝ ይህን ፋይል እና ተጨማሪ {{count}} ማንበብ ይፈልጋል",
+		"wantsToReadOutsideWorkspace": "ራታዝ ይህን ፋይል ከworkspace ውጭ ማንበብ ይፈልጋል",
+		"didRead": "ራታዝ ይህን ፋይል አንብቧል",
+		"wantsToEdit": "ራታዝ ይህን ፋይል ማስተካከል ይፈልጋል",
+		"wantsToEditOutsideWorkspace": "ራታዝ ይህን ፋይል ከworkspace ውጭ ማስተካከል ይፈልጋል",
+		"wantsToEditProtected": "ራታዝ የተጠበቀ የconfig ፋይል ማስተካከል ይፈልጋል",
+		"wantsToApplyBatchChanges": "ራታዝ በብዙ ፋይሎች ላይ ለውጦች መተግበር ይፈልጋል",
+		"wantsToGenerateImage": "ራታዝ ምስል መፍጠር ይፈልጋል",
+		"wantsToGenerateImageOutsideWorkspace": "ራታዝ ከworkspace ውጭ ምስል መፍጠር ይፈልጋል",
+		"wantsToGenerateImageProtected": "ራታዝ በተጠበቀ ቦታ ላይ ምስል መፍጠር ይፈልጋል",
+		"didGenerateImage": "ራታዝ ምስል ፈጥሯል",
+		"wantsToCreate": "ራታዝ አዲስ ፋይል መፍጠር ይፈልጋል",
+		"wantsToInsert": "ራታዝ በዚህ ፋይል ውስጥ ይዘት ማስገባት ይፈልጋል",
+		"wantsToInsertWithLineNumber": "ራታዝ በዚህ ፋይል ውስጥ በመስመር {{lineNumber}} ላይ ይዘት ማስገባት ይፈልጋል",
+		"wantsToInsertAtEnd": "ራታዝ በዚህ ፋይል መጨረሻ ላይ ይዘት ማከል ይፈልጋል"
 	},
 	"directoryOperations": {
-		"wantsToViewTopLevel": "Roo wants to view the top level files in this directory",
-		"didViewTopLevel": "Roo viewed the top level files in this directory",
-		"wantsToViewTopLevelOutsideWorkspace": "Roo wants to view the top level files in this directory (outside workspace)",
-		"didViewTopLevelOutsideWorkspace": "Roo viewed the top level files in this directory (outside workspace)",
-		"wantsToViewRecursive": "Roo wants to recursively view all files in this directory",
-		"didViewRecursive": "Roo recursively viewed all files in this directory",
-		"wantsToViewRecursiveOutsideWorkspace": "Roo wants to recursively view all files in this directory (outside workspace)",
-		"didViewRecursiveOutsideWorkspace": "Roo recursively viewed all files in this directory (outside workspace)",
-		"wantsToViewMultipleDirectories": "Roo wants to view multiple directories",
-		"wantsToSearch": "Roo wants to search this directory for <code>{{regex}}</code>",
-		"didSearch": "Roo searched this directory for <code>{{regex}}</code>",
-		"wantsToSearchOutsideWorkspace": "Roo wants to search this directory (outside workspace) for <code>{{regex}}</code>",
-		"didSearchOutsideWorkspace": "Roo searched this directory (outside workspace) for <code>{{regex}}</code>"
+		"wantsToViewTopLevel": "ራታዝ በዚህ ማውጫ ውስጥ ያሉ ከፍተኛ ደረጃ ፋይሎችን ማየት ይፈልጋል",
+		"didViewTopLevel": "ራታዝ በዚህ ማውጫ ውስጥ ያሉ ከፍተኛ ደረጃ ፋይሎችን አይቷል",
+		"wantsToViewTopLevelOutsideWorkspace": "ራታዝ በዚህ ማውጫ ውስጥ ያሉ ከፍተኛ ደረጃ ፋይሎችን (ከworkspace ውጭ) ማየት ይፈልጋል",
+		"didViewTopLevelOutsideWorkspace": "ራታዝ በዚህ ማውጫ ውስጥ ያሉ ከፍተኛ ደረጃ ፋይሎችን (ከworkspace ውጭ) አይቷል",
+		"wantsToViewRecursive": "ራታዝ በዚህ ማውጫ ውስጥ ያሉ ሁሉንም ፋይሎች በተከታታይ ማየት ይፈልጋል",
+		"didViewRecursive": "ራታዝ በዚህ ማውጫ ውስጥ ያሉ ሁሉንም ፋይሎች በተከታታይ አይቷል",
+		"wantsToViewRecursiveOutsideWorkspace": "ራታዝ በዚህ ማውጫ ውስጥ ያሉ ሁሉንም ፋይሎች (ከworkspace ውጭ) በተከታታይ ማየት ይፈልጋል",
+		"didViewRecursiveOutsideWorkspace": "ራታዝ በዚህ ማውጫ ውስጥ ያሉ ሁሉንም ፋይሎች (ከworkspace ውጭ) በተከታታይ አይቷል",
+		"wantsToViewMultipleDirectories": "ራታዝ ብዙ ማውጫዎችን ማየት ይፈልጋል",
+		"wantsToSearch": "ራታዝ በዚህ ማውጫ ውስጥ <code>{{regex}}</code> ለመፈለግ ይፈልጋል",
+		"didSearch": "ራታዝ በዚህ ማውጫ ውስጥ <code>{{regex}}</code> ፈልጎ አግኝቷል",
+		"wantsToSearchOutsideWorkspace": "ራታዝ በዚህ ማውጫ (ከworkspace ውጭ) ውስጥ <code>{{regex}}</code> ለመፈለግ ይፈልጋል",
+		"didSearchOutsideWorkspace": "ራታዝ በዚህ ማውጫ (ከworkspace ውጭ) ውስጥ <code>{{regex}}</code> ፈልጎ አግኝቷል"
 	},
 	"codebaseSearch": {
-		"wantsToSearch": "Roo wants to search the codebase for <code>{{query}}</code>",
-		"wantsToSearchWithPath": "Roo wants to search the codebase for <code>{{query}}</code> in <code>{{path}}</code>",
+		"wantsToSearch": "ራታዝ በcodebase ውስጥ <code>{{query}}</code> መፈለግ ይፈልጋል",
+		"wantsToSearchWithPath": "ራታዝ በcodebase ውስጥ <code>{{path}}</code> ላይ <code>{{query}}</code> መፈለግ ይፈልጋል",
 		"didSearch_one": "Found 1 result",
 		"didSearch_other": "Found {{count}} results",
 		"resultTooltip": "Similarity score: {{score}} (click to open file)"
@@ -286,24 +290,24 @@
 	"response": "Response",
 	"arguments": "Arguments",
 	"text": {
-		"rooSaid": "Roo said"
+		"rooSaid": "ራታዝ አለ፦"
 	},
 	"feedback": {
 		"youSaid": "You said"
 	},
 	"mcp": {
-		"wantsToUseTool": "Roo wants to use a tool on the {{serverName}} MCP server",
-		"wantsToAccessResource": "Roo wants to access a resource on the {{serverName}} MCP server"
+		"wantsToUseTool": "ራታዝ በ{{serverName}} MCP server ላይ መሳሪያ መጠቀም ይፈልጋል",
+		"wantsToAccessResource": "ራታዝ በ{{serverName}} MCP server ላይ ምንጭ መድረስ ይፈልጋል"
 	},
 	"modes": {
-		"wantsToSwitch": "Roo wants to switch to {{mode}} mode",
-		"wantsToSwitchWithReason": "Roo wants to switch to {{mode}} mode because: {{reason}}",
-		"didSwitch": "Roo switched to {{mode}} mode",
-		"didSwitchWithReason": "Roo switched to {{mode}} mode because: {{reason}}"
+		"wantsToSwitch": "ራታዝ ወደ {{mode}} mode መቀየር ይፈልጋል",
+		"wantsToSwitchWithReason": "ራታዝ በዚህ ምክንያት ወደ {{mode}} mode መቀየር ይፈልጋል: {{reason}}",
+		"didSwitch": "ራታዝ ወደ {{mode}} mode ተቀይሯል",
+		"didSwitchWithReason": "ራታዝ በዚህ ምክንያት ወደ {{mode}} mode ተቀይሯል: {{reason}}"
 	},
 	"subtasks": {
-		"wantsToCreate": "Roo wants to create a new subtask in {{mode}} mode",
-		"wantsToFinish": "Roo wants to mark this as completed",
+		"wantsToCreate": "ራታዝ በ{{mode}} mode አዲስ subtask መፍጠር ይፈልጋል",
+		"wantsToFinish": "ራታዝ ይህን እንደተጠናቀቀ ማስያዝ ይፈልጋል",
 		"newTaskContent": "Subtask Instructions",
 		"resultContent": "Subtask completed",
 		"defaultResult": "Please continue to the next task.",
@@ -311,7 +315,7 @@
 		"goToSubtask": "View task"
 	},
 	"questions": {
-		"hasQuestion": "Roo has a question"
+		"hasQuestion": "ራታዝ ጥያቄ አለው"
 	},
 	"taskCompleted": "Task Completed",
 	"error": "Error",
@@ -328,12 +332,12 @@
 		"copyToClipboard": "Copy basic error info",
 		"copied": "Copied!",
 		"diagnostics": "Get detailed error info",
-		"proxyProvider": "You seem to be using a proxy-based provider. Make sure to check its logs and to ensure it's not rewriting Roo's requests."
+		"proxyProvider": "You seem to be using a proxy-based provider. Make sure to check its logs and to ensure it's not rewriting ራታዝ's requests."
 	},
 	"diffError": {
 		"title": "Edit Unsuccessful"
 	},
-	"troubleMessage": "Roo is having trouble...",
+	"troubleMessage": "ራታዝ ችግር አጋጥሞታል...",
 	"powershell": {
 		"issues": "It seems like you're having Windows PowerShell issues, please see this"
 	},
@@ -405,12 +409,12 @@
 	"ask": {
 		"autoApprovedRequestLimitReached": {
 			"title": "Auto-Approved Request Limit Reached",
-			"description": "Roo has reached the auto-approved limit of {{count}} API request(s). Would you like to reset the count and proceed with the task?",
+			"description": "ራታዝ has reached the auto-approved limit of {{count}} API request(s). Would you like to reset the count and proceed with the task?",
 			"button": "Reset and Continue"
 		},
 		"autoApprovedCostLimitReached": {
 			"title": "Auto-Approved Cost Limit Reached",
-			"description": "Roo has reached the auto-approved cost limit of ${{count}}. Would you like to reset the cost and proceed with the task?",
+			"description": "ራታዝ has reached the auto-approved cost limit of ${{count}}. Would you like to reset the cost and proceed with the task?",
 			"button": "Reset and Continue"
 		}
 	},
@@ -448,8 +452,8 @@
 		}
 	},
 	"slashCommand": {
-		"wantsToRun": "Roo wants to run a slash command",
-		"didRun": "Roo ran a slash command"
+		"wantsToRun": "ራታዝ slash command ማስኬድ ይፈልጋል",
+		"didRun": "ራታዝ slash command አስኬዷል"
 	},
 	"queuedMessages": {
 		"title": "Queued Messages",
@@ -478,11 +482,11 @@
 		"openMcpSettings": "Open MCP Settings"
 	},
 	"readCommandOutput": {
-		"title": "Roo read command output"
+		"title": "ራታዝ የcommand ውጤት አንብቧል"
 	},
 	"retiredProvider": {
 		"title": "Provider no longer supported",
-		"message": "Sorry, this provider is no longer supported. We saw very few Roo users actually using it and we need to reduce the surface area of our codebase so we can keep shipping fast and serving our community well in this space. It was a really hard decision but it lets us focus on what matters most to you. It sucks, we know.",
+		"message": "Sorry, this provider is no longer supported. We saw very few ራታዝ users actually using it and we need to reduce the surface area of our codebase so we can keep shipping fast and serving our community well in this space. It was a really hard decision but it lets us focus on what matters most to you. It sucks, we know.",
 		"openSettings": "Open Settings"
 	}
 }

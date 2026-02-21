@@ -43,6 +43,34 @@ import { sanitizeToolUseId } from "../../utils/tool-id"
 import { preToolUse, type PreToolResult } from "../../hooks/preToolUse"
 import { postToolUse } from "../../hooks/postToolUse"
 
+function buildIntentHintText(cline: Task): string {
+	const parts: string[] = []
+	if (typeof cline.metadata.task === "string" && cline.metadata.task.trim().length > 0) {
+		parts.push(cline.metadata.task.trim())
+	}
+	for (let i = cline.apiConversationHistory.length - 1; i >= 0 && parts.length < 4; i--) {
+		const message = cline.apiConversationHistory[i]
+		if (message.role !== "user") {
+			continue
+		}
+		if (typeof message.content === "string" && message.content.trim().length > 0) {
+			parts.push(message.content.trim())
+			continue
+		}
+		if (Array.isArray(message.content)) {
+			const text = message.content
+				.filter((block: any) => block?.type === "text" && typeof block?.text === "string")
+				.map((block: any) => String(block.text).trim())
+				.filter((value: string) => value.length > 0)
+				.join(" ")
+			if (text.length > 0) {
+				parts.push(text)
+			}
+		}
+	}
+	return parts.join("\n").slice(0, 4000)
+}
+
 /**
  * Processes and presents assistant message content to the user interface.
  *
@@ -282,6 +310,7 @@ export async function presentAssistantMessage(cline: Task) {
 						cwd: cline.cwd,
 						toolName: mcpBlock.name,
 						args: governanceArgs,
+						intentHintText: buildIntentHintText(cline),
 					})
 				: {
 						ok: true,
@@ -653,6 +682,7 @@ export async function presentAssistantMessage(cline: Task) {
 						cwd: cline.cwd,
 						toolName: block.name,
 						args: governanceArgs,
+						intentHintText: buildIntentHintText(cline),
 					})
 				: {
 						ok: true,

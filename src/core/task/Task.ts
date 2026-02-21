@@ -35,6 +35,7 @@ import {
 	type ModelInfo,
 	type ClineApiReqCancelReason,
 	type ClineApiReqInfo,
+	type ClineSayTool,
 	RooCodeEventName,
 	TelemetryEventName,
 	TaskStatus,
@@ -129,6 +130,7 @@ import { processUserContentMentions } from "../mentions/processUserContentMentio
 import { getMessagesSinceLastSummary, summarizeConversation, getEffectiveApiHistory } from "../condense"
 import { MessageQueueService } from "../message-queue/MessageQueueService"
 import { AutoApprovalHandler, checkAutoApproval } from "../auto-approval"
+import { isReadOnlyToolAction } from "../auto-approval/tools"
 import { MessageManager } from "../message-manager"
 import { validateAndFixToolResultIds } from "./validateToolResultIds"
 import { mergeConsecutiveApiMessages } from "./mergeConsecutiveApiMessages"
@@ -314,6 +316,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	private askResponse?: ClineAskResponse
 	private askResponseText?: string
 	private askResponseImages?: string[]
+	private currentAskType?: ClineAsk
+	private currentAskText?: string
+	private alwaysApproveReadOnlyForSession = false
 	public lastMessageTs?: number
 	private autoApprovalTimeoutRef?: NodeJS.Timeout
 
@@ -1364,11 +1369,16 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 
 		let timeouts: NodeJS.Timeout[] = []
+		this.currentAskType = type
+		this.currentAskText = text
 
 		// Automatically approve if the ask according to the user's settings.
 		const provider = this.providerRef.deref()
 		const state = provider ? await provider.getState() : undefined
-		const approval = await checkAutoApproval({ state, ask: type, text, isProtected })
+		const shouldSessionAutoApprove = this.shouldAutoApproveReadOnlyToolAsk(type, text)
+		const approval = shouldSessionAutoApprove
+			? { decision: "approve" as const }
+			: await checkAutoApproval({ state, ask: type, text, isProtected })
 
 		if (approval.decision === "approve") {
 			this.approveAsk()
@@ -1474,6 +1484,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		)
 
 		if (this.lastMessageTs !== askTs) {
+			this.currentAskType = undefined
+			this.currentAskText = undefined
 			// Could happen if we send multiple asks in a row i.e. with
 			// command_output. It's important that when we know an ask could
 			// fail, it is handled gracefully.
@@ -1484,6 +1496,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.askResponse = undefined
 		this.askResponseText = undefined
 		this.askResponseImages = undefined
+		this.currentAskType = undefined
+		this.currentAskText = undefined
 
 		// Cancel the timeouts if they are still running.
 		timeouts.forEach((timeout) => clearTimeout(timeout))
@@ -1504,19 +1518,27 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		// Clear any pending auto-approval timeout when user responds
 		this.cancelAutoApprovalTimeout()
 
-		this.askResponse = askResponse
+		let normalizedResponse = askResponse
+		if (askResponse === "yesButtonClickedAlways") {
+			if (this.isReadOnlyToolAsk(this.currentAskType, this.currentAskText)) {
+				this.alwaysApproveReadOnlyForSession = true
+			}
+			normalizedResponse = "yesButtonClicked"
+		}
+
+		this.askResponse = normalizedResponse
 		this.askResponseText = text
 		this.askResponseImages = images
 
 		// Create a checkpoint whenever the user sends a message.
 		// Use allowEmpty=true to ensure a checkpoint is recorded even if there are no file changes.
 		// Suppress the checkpoint_saved chat row for this particular checkpoint to keep the timeline clean.
-		if (askResponse === "messageResponse") {
+		if (normalizedResponse === "messageResponse") {
 			void this.checkpointSave(false, true)
 		}
 
 		// Mark the last follow-up question as answered
-		if (askResponse === "messageResponse" || askResponse === "yesButtonClicked") {
+		if (normalizedResponse === "messageResponse" || normalizedResponse === "yesButtonClicked") {
 			// Find the last unanswered follow-up message using findLastIndex
 			const lastFollowUpIndex = findLastIndex(
 				this.clineMessages,
@@ -1531,6 +1553,23 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					console.error("Failed to save answered follow-up state:", error)
 				})
 			}
+		}
+	}
+
+	private shouldAutoApproveReadOnlyToolAsk(type?: ClineAsk, text?: string): boolean {
+		return this.alwaysApproveReadOnlyForSession && this.isReadOnlyToolAsk(type, text)
+	}
+
+	private isReadOnlyToolAsk(type?: ClineAsk, text?: string): boolean {
+		if (type !== "tool" || !text) {
+			return false
+		}
+
+		try {
+			const tool = JSON.parse(text) as ClineSayTool
+			return isReadOnlyToolAction(tool)
+		} catch {
+			return false
 		}
 	}
 

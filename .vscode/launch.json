@@ -10,7 +10,12 @@
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceFolder}/src"],
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}/src",
+				"--disable-extensions",
+				"--user-data-dir=${workspaceFolder}/.vscode-devhost/user-data",
+				"--extensions-dir=${workspaceFolder}/.vscode-devhost/extensions"
+			],
 			"sourceMaps": true,
 			"outFiles": ["${workspaceFolder}/src/dist/**/*.js"],
 			"preLaunchTask": "${defaultBuildTask}",
