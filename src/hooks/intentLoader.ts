@@ -66,7 +66,11 @@ function normalizeIntent(raw: any): IntentDefinition {
 		id: String(raw?.id ?? ""),
 		title: String(raw?.title ?? ""),
 		description: String(raw?.description ?? ""),
-		scope: Array.isArray(raw?.scope) ? raw.scope.map((v: unknown) => String(v)) : [],
+		scope: Array.isArray(raw?.scope)
+			? raw.scope.map((v: unknown) => String(v))
+			: Array.isArray(raw?.owned_scope)
+				? raw.owned_scope.map((v: unknown) => String(v))
+				: [],
 		acceptanceCriteria: Array.isArray(raw?.acceptanceCriteria)
 			? raw.acceptanceCriteria.map((v: unknown) => String(v))
 			: Array.isArray(raw?.acceptance_criteria)
@@ -89,9 +93,16 @@ function validateIntent(intent: IntentDefinition): boolean {
 }
 
 function validateData(data: any): IntentFileShape {
-	const intentsRaw = Array.isArray(data?.intents) ? data.intents : null
+	const intentsRaw = Array.isArray(data?.intents)
+		? data.intents
+		: Array.isArray(data?.active_intents)
+			? data.active_intents
+			: null
 	if (!intentsRaw) {
-		throw new IntentLoadError("INTENT_SCHEMA_INVALID", "Invalid active_intents.yaml: missing intents[]")
+		throw new IntentLoadError(
+			"INTENT_SCHEMA_INVALID",
+			"Invalid active_intents.yaml: missing intents[] (or active_intents[]).",
+		)
 	}
 	const intents = intentsRaw.map(normalizeIntent)
 	if (!intents.every(validateIntent)) {
@@ -271,12 +282,52 @@ export async function ensureIntentCatalogFile(cwd: string): Promise<void> {
 		const example: IntentFileShape = {
 			intents: [
 				{
-					id: "INT-001",
-					title: "Governance Hook Layer",
-					description: "Implement deterministic lifecycle hooks and policy checks.",
-					scope: ["src/hooks/**", "src/core/assistant-message/**"],
-					acceptanceCriteria: ["preToolUse and postToolUse run for every tool call"],
+					id: "INT-GEN-001",
+					title: "Architecture and Planning",
+					description: "Define architecture boundaries, contracts, and implementation plan.",
+					scope: ["src/**", "docs/**", "*.md"],
+					acceptanceCriteria: ["Architecture notes are updated", "Implementation plan is explicit"],
 					status: "IN_PROGRESS",
+				},
+				{
+					id: "INT-GEN-002",
+					title: "Core Feature Delivery",
+					description: "Implement core product behavior in application logic.",
+					scope: ["src/**", "app/**", "lib/**"],
+					acceptanceCriteria: ["Feature behavior matches request", "Backward compatibility is preserved"],
+					status: "PLANNED",
+				},
+				{
+					id: "INT-GEN-003",
+					title: "Frontend and UX",
+					description: "Implement UI/UX flows, accessibility, and interaction quality.",
+					scope: ["web/**", "webview-ui/**", "frontend/**", "ui/**", "src/**/*.tsx", "src/**/*.css"],
+					acceptanceCriteria: ["UI flow is usable", "No accessibility regressions in changed UI"],
+					status: "PLANNED",
+				},
+				{
+					id: "INT-GEN-004",
+					title: "Quality and Verification",
+					description: "Add or update tests, lint compliance, and verification routines.",
+					scope: ["tests/**", "src/**", ".github/workflows/**", "vitest.*", "jest.*"],
+					acceptanceCriteria: ["Relevant tests pass", "Lint/type checks pass for changed scope"],
+					status: "PLANNED",
+				},
+				{
+					id: "INT-GEN-005",
+					title: "Infrastructure and Delivery",
+					description: "Maintain CI/CD, deployment config, and runtime environment behavior.",
+					scope: ["infra/**", "deploy/**", "docker/**", ".github/**", "*.yml", "*.yaml"],
+					acceptanceCriteria: ["Pipeline config is valid", "Deployment/runtime config remains stable"],
+					status: "PLANNED",
+				},
+				{
+					id: "INT-GEN-006",
+					title: "Documentation and Onboarding",
+					description: "Update docs, setup guides, and developer onboarding materials.",
+					scope: ["docs/**", "README.md", "ARCHITECTURE_NOTES.md", ".orchestration/**"],
+					acceptanceCriteria: ["Docs reflect implementation changes", "Onboarding steps are reproducible"],
+					status: "PLANNED",
 				},
 			],
 		}
