@@ -5,6 +5,7 @@ import { updateIntentStatus } from "./intentLoader"
 import { updateIntentMap } from "./intentMapUpdater"
 import { recordCompactEntry } from "./preCompact"
 import { buildSpatialRanges } from "./spatialTrace"
+import { registerParallelActivity } from "./parallelOrchestration"
 import type { SemanticMutationClass } from "./mutationClassifier"
 
 import type { PreToolResult } from "./preToolUse"
@@ -165,6 +166,13 @@ export async function postToolUse(context: PostToolContext): Promise<void> {
 		})
 
 		await appendTraceRecord(context.cwd, record)
+		await registerParallelActivity({
+			cwd: context.cwd,
+			taskId: context.taskId,
+			intentId: context.pre.intentId,
+			toolName: context.toolName,
+			status: context.status,
+		}).catch(() => undefined)
 		recordCompactEntry(context.taskId, {
 			tool: context.toolName,
 			status: context.status,

@@ -13,6 +13,7 @@ import { sanitizeAndNormalizePath, validatePathAgainstScope } from "./scopeValid
 import { inferSemanticMutationClass, isMutationClassCompatible, type SemanticMutationClass } from "./mutationClassifier"
 import { preCompact } from "./preCompact"
 import { resolveIntentForToolCall } from "./autoIntentResolver"
+import { recordParallelCollision } from "./parallelOrchestration"
 
 const fileReadTools = new Set(["read_file"])
 const fileWriteTools = new Set([
@@ -265,6 +266,13 @@ export async function preToolUse(context: PreToolContext): Promise<PreToolResult
 					typeof normalizedArgs.read_hash === "string" ? normalizedArgs.read_hash : undefined,
 				)
 				if (!freshness.ok) {
+					await recordParallelCollision(context.cwd, {
+						task_id: context.taskId,
+						intent_id: selectedIntent?.id ?? null,
+						path: normalizedPath.relativePath,
+						expected_hash: freshness.expectedHash,
+						actual_hash: freshness.actualHash,
+					}).catch(() => undefined)
 					return {
 						ok: false,
 						intentId: selectedIntent?.id ?? null,
