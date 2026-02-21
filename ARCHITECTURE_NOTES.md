@@ -3,276 +3,275 @@
 ## Governed AI-Native IDE Extension (TRP1 Week 1)
 
 Author: Ephrata Nebiyu  
-Base Fork: Rataz AI  
-Objective: Upgrade Roo into a Governed AI-Native IDE with Intent-Code Traceability
+Base Fork: Roo Code (rebranded as Rataz AI / ራታዝ)  
+Objective: Upgrade Roo into a governed AI-native IDE with deterministic intent control and end-to-end traceability.
 
 ---
 
-# 1. Problem Statement
+## 1. Problem Statement
 
-Traditional Git tracks textual diffs but lacks:
+Traditional Git captures **what changed** and **when**, but not reliably:
 
-- Intent awareness (WHY)
-- Structural identity (AST)
-- AI attribution metadata
-- Governance enforcement
-- Concurrency protection
+- why the change happened (business intent),
+- which agent action produced it,
+- whether the action complied with governance policy,
+- whether concurrent edits were safe.
 
-This extension upgrades Rataz AI into a deterministic, governed AI-native IDE by implementing:
-
-- Intent-first execution
-- Deterministic lifecycle hooks
-- AI-native Git trace layer
-- Spatially independent content hashing
-- Parallel multi-agent orchestration
+This implementation addresses that gap by introducing an intent-first execution model, deterministic hook middleware, and sidecar-based auditability.
 
 ---
 
-# 2. High-Level Architecture
+## 2. System Architecture
 
-The system follows strict privilege separation:
+### 2.1 Webview Layer (Presentation)
 
-## 2.1 Webview (UI Layer)
+Responsibilities:
 
-- Chat interface
-- Emits events via postMessage
-- Cannot access filesystem or secrets
-- No execution logic
+- chat and controls,
+- governance status and trace visualization,
+- user approvals (HITL UI actions),
+- postMessage communication to extension host.
 
-## 2.2 Extension Host (Logic Layer)
+Non-responsibilities:
 
-- Handles LLM calls
-- Manages MCP tool execution
-- Contains Hook Engine
-- Manages orchestration state
-- Manages sidecar storage
+- no filesystem access,
+- no policy enforcement,
+- no direct tool execution.
 
-## 2.3 Hook Engine (Middleware Boundary)
+### 2.2 Extension Host Layer (Control Plane)
 
-Central governance layer intercepting all tool calls.
+Responsibilities:
 
-Implements:
+- task lifecycle and tool routing,
+- LLM interaction,
+- governance hook invocation,
+- sidecar read/write,
+- enforcement and trace recording.
 
-- PreToolUse hooks
-- PostToolUse hooks
-- Context injection
-- Scope enforcement
-- HITL authorization
-- Trace logging
-- Concurrency validation
+### 2.3 Hook Engine (Deterministic Middleware Boundary)
 
----
+Location: `src/hooks/`
 
-# 3. Two-Stage Execution State Machine
+Primary modules:
 
-To prevent uncontrolled code generation, the system enforces a mandatory handshake.
+- `preToolUse.ts`
+- `postToolUse.ts`
+- `intentLoader.ts`
+- `scopeValidator.ts`
+- `traceLogger.ts`
+- `concurrencyGuard.ts`
+- `securityClassifier.ts`
+- `governanceStatus.ts`
+- `autoIntentResolver.ts`
+- `intentMapUpdater.ts`
+- `parallelOrchestration.ts`
+- `preCompact.ts`
 
-## STATE 1: User Request
-
-Example:
-
-> "Refactor auth middleware"
-
-Agent CANNOT write code immediately.
-
-## STATE 2: Intent Handshake
-
-Agent MUST call:
-
-select_active_intent(intent_id)
-
-PreHook:
-
-- Validates intent exists
-- Loads constraints
-- Loads owned scope
-- Injects <intent_context> XML block
-
-Execution resumes only after context injection.
-
-## STATE 3: Contextualized Action
-
-Agent calls write_file with:
-
-- intent_id
-- mutation_class
-
-PostHook:
-
-- Computes content_hash
-- Logs Agent Trace record
-- Updates sidecar state
+Hooks are isolated from webview rendering and invoked from the execution pipeline.
 
 ---
 
-# 4. Sidecar Storage Model (.orchestration/)
+## 3. Governed Execution Flow
 
-Machine-managed only.
+### State 1: User Request
 
-## 4.1 active_intents.yaml
+User submits task request.
 
-Tracks business lifecycle and scope boundaries.
+### State 2: Intent Handshake
 
-Example:
+Agent is expected to identify/select intent via `select_active_intent(intent_id)`.
 
-active_intents:
+Pre-hook behavior:
 
-- id: "INT-001"
-  name: "JWT Authentication Migration"
-  status: "IN_PROGRESS"
-  owned_scope:
-    - "src/auth/\*\*"
-    - "src/middleware/jwt.ts"
-      constraints:
-    - "Must not use external auth providers"
-    - "Maintain backward compatibility"
-      acceptance_criteria:
-    - "Unit tests in tests/auth/ pass"
+- loads intent catalog,
+- validates intent existence,
+- resolves ambiguity with deterministic scoring when needed,
+- binds active intent to task/workspace state,
+- blocks if handshake cannot be established for governed actions.
 
----
+### State 3: Contextualized Action
 
-## 4.2 agent_trace.jsonl
+Agent executes tools under active intent constraints.
 
-Append-only ledger.
+Pre-hook enforces:
 
-Each entry:
+- scope constraints,
+- command/tool security class,
+- HITL approval (for write/destructive classes),
+- stale-write checks (optimistic locking).
 
-- uuid
-- timestamp (RFC 3339)
-- git revision
-- file path
-- contributor metadata
-- content_hash
-- related intent_id
+Post-hook enforces:
 
-Spatial independence ensured via SHA-256 hashing.
+- trace serialization,
+- content hash generation,
+- lifecycle updates,
+- sidecar append/update.
 
 ---
 
-## 4.3 intent_map.md
+## 4. Sidecar Data Model (`.orchestration/`)
 
-Maps:
-Business Intent → Files → AST Nodes
+### 4.1 `active_intents.yaml`
 
-Updated during INTENT_EVOLUTION.
+Intent catalog with governance metadata.
 
----
+Core fields:
 
-## 4.4 CLAUDE.md (Shared Brain)
+- `id`
+- `title`
+- `description`
+- `scope` (glob patterns)
+- `acceptanceCriteria`
+- `status` (`PLANNED | IN_PROGRESS | COMPLETED`)
 
-Stores:
+### 4.2 `active_intent.json`
 
-- Architectural decisions
-- Lessons learned
-- Failure recovery notes
+Current active selection for workspace/task continuity.
 
-Shared across parallel agents.
+### 4.3 `agent_trace.jsonl`
 
----
+Append-only trace ledger containing:
 
-# 5. Hook Engine Architecture
+- intent linkage,
+- tool metadata,
+- decision reason,
+- status (`success | failure | blocked`),
+- approval state,
+- duration/error fields,
+- vcs metadata,
+- file/range hash metadata.
 
-Location:
-src/hooks/
+### 4.4 `intent_map.md`
 
-Modules:
+Intent-to-file map updated during intent evolution and file creation events.
 
-- preToolUse.ts
-- postToolUse.ts
-- intentLoader.ts
-- scopeValidator.ts
-- traceLogger.ts
-- concurrencyGuard.ts
-- securityClassifier.ts
+### 4.5 `CLAUDE.md`
 
-Hooks are isolated middleware components.
-They do NOT pollute core execution loop.
-
----
-
-# 6. PreToolUse Responsibilities
-
-1. Enforce Intent Selection
-2. Classify Command (Safe vs Destructive)
-3. Enforce Scope
-4. HITL Authorization
-5. Concurrency Validation
-
-Blocking Errors:
-
-- Missing intent_id
-- Scope violation
-- Stale file hash
-- Unauthorized destructive action
+Shared memory for lessons/failure notes used in parallel orchestration workflows.
 
 ---
 
-# 7. PostToolUse Responsibilities
+## 5. Intent Loading and Fallback Strategy
 
-1. Compute SHA-256 content hash
-2. Detect mutation_class:
-    - AST_REFACTOR
-    - INTENT_EVOLUTION
-3. Serialize Agent Trace schema
-4. Append to agent_trace.jsonl
-5. Update CLAUDE.md if verification fails
+Intent catalogs are **workspace-scoped by design**:
 
----
+- primary source: `<workspace>/.orchestration/active_intents.yaml`
 
-# 8. Concurrency Control
+Fallback behavior implemented in `intentLoader.ts`:
 
-Optimistic Locking Strategy:
+1. If workspace catalog is missing, extension attempts to materialize default bundled intents into workspace.
+2. If materialization fails (permissions/read-only), extension uses in-memory default catalog to avoid deadlock.
 
-Before write:
-
-- Compare file hash at read-time
-- Compare with current disk hash
-- If mismatch → reject write
-
-Prevents parallel agent overwrite.
+This preserves workspace isolation while providing first-run resilience.
 
 ---
 
-# 9. Security Model
+## 6. Governance Enforcement (Pre-Hook)
 
-- Least privilege
-- No execution logic in Webview
-- Path sanitization
-- Directory traversal prevention
-- Shell argument escaping
-- Mandatory HITL for destructive actions
+### 6.1 Security Classification
+
+Tools/commands are classified into `SAFE`, `WRITE`, `DESTRUCTIVE` classes.
+
+### 6.2 Scope Validation
+
+Mutations must match active intent scope patterns; out-of-scope writes are blocked.
+
+### 6.3 HITL Approval
+
+Sensitive actions require explicit user decision.
+
+Additional UX hardening:
+
+- `Approve once`
+- `Approve always (session)` (for eligible flows)
+- `Deny`
+
+### 6.4 Concurrency Guard
+
+Optimistic locking compares read-time hash to current disk hash before write.
+
+If mismatch:
+
+- write blocked as stale,
+- collision recorded in orchestration sidecar.
+
+### 6.5 Circuit Breaker
+
+Repeated failure loops trigger breaker and block further tool execution until recovery.
 
 ---
 
-# 10. Performance Strategy
+## 7. Post-Hook Responsibilities
 
-- Append-only JSONL (O(1) writes)
-- Lazy YAML parsing (cached in memory)
-- Hashing only modified blocks
-- No full file AST rebuild
-- Token compaction via PreCompact hook
-- Circuit breaker for infinite tool loops
+After tool execution:
 
----
-
-# 11. Edge Case Handling
-
-- Missing intent_id → Hard block
-- Intent outside scope → Hard block
-- Invalid YAML → Fails safe
-- Stale file write → Reject and re-read
-- Repeated tool failures → Circuit breaker
-- Agent tries bypassing handshake → Reject
+1. compute and attach content hashes,
+2. build structured trace record,
+3. append trace atomically to JSONL ledger,
+4. update intent map / orchestration state,
+5. evaluate transition signals (e.g., `IN_PROGRESS -> COMPLETED` when criteria are met).
 
 ---
 
-# 12. Master Thinker Compliance
+## 8. Real-Time Governance Observability
 
-This architecture achieves:
+UI components:
 
-- Intent-AST correlation
-- Dynamic context injection
-- Clean middleware isolation
-- Parallel orchestration
-- Cryptographic traceability
-- Governance-first execution
+- `GovernanceStatusPanel`
+- `GovernanceTraceExplorer`
+
+Extension host (`ClineProvider`) watches orchestration file changes and posts refreshed state to webview.
+
+Observed in UI:
+
+- active intent,
+- latest governance decision,
+- trace count,
+- filtered trace stream (intent/tool/status/collision).
+
+---
+
+## 9. Security Model
+
+- policy logic is extension-host only,
+- workspace path normalization and traversal prevention,
+- command safety validation,
+- governed writes require intent + approval + freshness checks,
+- webview is non-privileged.
+
+---
+
+## 10. Performance and Reliability
+
+- append-only JSONL ledger (O(1) append pattern),
+- in-memory intent cache keyed by file mtime,
+- debounced governance UI refresh,
+- partial non-blocking compaction support (`preCompact`),
+- graceful behavior when git SHA unavailable.
+
+---
+
+## 11. Known Edge Cases Covered
+
+- missing/invalid intent YAML,
+- no active intent selected,
+- ambiguous intent auto-resolution,
+- out-of-scope mutation,
+- stale-write collisions,
+- repeated tool error loops,
+- malformed write request metadata.
+
+---
+
+## 12. Current Compliance Position (TRP1 Week 1)
+
+Achieved:
+
+- intent-aware governed execution,
+- deterministic middleware enforcement,
+- sidecar traceability with content hashing,
+- optimistic locking and collision logging,
+- HITL controls,
+- real-time governance visibility.
+
+This architecture is built for auditable, policy-driven agentic development rather than unconstrained code generation.
