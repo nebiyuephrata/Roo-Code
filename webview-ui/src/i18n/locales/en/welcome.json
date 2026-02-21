@@ -9,7 +9,7 @@
 		},
 		"roo": {
 			"description": "The best free models to get started",
-			"incentive": "Try Roo out for free"
+			"incentive": "Try ራታዝ out for free"
 		}
 	},
 	"landing": {
@@ -21,14 +21,14 @@
 	},
 	"providerSignup": {
 		"heading": "Choose your provider",
-		"chooseProvider": "Roo needs an LLM provider to work. Choose one to get started, you can add more later.",
-		"rooCloudProvider": "Roo Code Router",
-		"rooCloudDescription": "The easiest way to start is with the Roo Code Router: a curated mix of free and paid models at a low cost.",
+		"chooseProvider": "ራታዝ needs an LLM provider to work. Choose one to get started, you can add more later.",
+		"rooCloudProvider": "ራታዝ AI Router",
+		"rooCloudDescription": "The easiest way to start is with the ራታዝ AI Router: a curated mix of free and paid models at a low cost.",
 		"learnMore": "Learn more",
 		"useAnotherProvider": "3rd-party Provider",
 		"useAnotherProviderDescription": "Enter an API key and get going.",
 		"noApiKeys": "Don't want to deal with API keys and separate accounts?",
-		"backToRoo": "Go with the Roo Code Router.",
+		"backToRoo": "Go with the ራታዝ AI Router.",
 		"goBack": "Back",
 		"finish": "Finish"
 	},

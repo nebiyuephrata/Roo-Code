@@ -902,6 +902,30 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		[clineAsk, startNewTask, isStreaming, setDidClickCancel],
 	)
 
+	const handleApproveAlwaysButtonClick = useCallback((text?: string, images?: string[]) => {
+		userRespondedRef.current = true
+
+		const trimmedInput = text?.trim()
+		if (trimmedInput || (images && images.length > 0)) {
+			vscode.postMessage({
+				type: "askResponse",
+				askResponse: "yesButtonClickedAlways",
+				text: trimmedInput,
+				images: images,
+			})
+			setInputValue("")
+			setSelectedImages([])
+		} else {
+			vscode.postMessage({ type: "askResponse", askResponse: "yesButtonClickedAlways" })
+		}
+
+		setSendingDisabled(true)
+		setClineAsk(undefined)
+		setEnableButtons(false)
+		setPrimaryButtonText(undefined)
+		setSecondaryButtonText(undefined)
+	}, [])
+
 	const { info: model } = useSelectedModel(apiConfiguration)
 
 	const selectImages = useCallback(() => vscode.postMessage({ type: "selectImages" }), [])
@@ -1582,6 +1606,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		vscode.postMessage({ type: "condenseTaskContextRequest", text: taskId })
 	}
 
+	const showApproveAlwaysSessionButton =
+		clineAsk === "tool" &&
+		enableButtons &&
+		primaryButtonText === t("chat:approve.title") &&
+		secondaryButtonText === t("chat:reject.title")
+
 	const areButtonsVisible = showScrollToBottom || primaryButtonText || secondaryButtonText
 
 	return (
@@ -1778,6 +1808,19 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 												className="flex-1 ml-[6px]"
 												onClick={() => handleSecondaryButtonClick(inputValue, selectedImages)}>
 												{secondaryButtonText}
+											</Button>
+										</StandardTooltip>
+									)}
+									{showApproveAlwaysSessionButton && (
+										<StandardTooltip content={t("chat:approveAlwaysSession.tooltip")}>
+											<Button
+												variant="secondary"
+												disabled={!enableButtons}
+												className="flex-1 ml-[6px]"
+												onClick={() =>
+													handleApproveAlwaysButtonClick(inputValue, selectedImages)
+												}>
+												{t("chat:approveAlwaysSession.title")}
 											</Button>
 										</StandardTooltip>
 									)}

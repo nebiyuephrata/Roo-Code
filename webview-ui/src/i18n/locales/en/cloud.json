@@ -6,7 +6,7 @@
 	"signIn": "Connect to Rataz AI Cloud",
 	"connect": "Get started",
 	"cloudBenefitsTitle": "Try Rataz AI Cloud",
-	"cloudBenefitProvider": "Access free and paid models that work great with Roo",
+	"cloudBenefitProvider": "Access free and paid models that work great with ራታዝ",
 	"cloudBenefitCloudAgents": "Give tasks to autonomous Cloud agents",
 	"cloudBenefitTriggers": "Get code reviews on Github, start tasks from Slack and more",
 	"cloudBenefitWalkaway": "Follow and control tasks from anywhere (including your phone)",
@@ -29,8 +29,8 @@
 	"switchAccount": "Switch Rataz AI Cloud Account",
 	"createTeamAccount": "Create Team Account",
 	"upsell": {
-		"autoApprovePowerUser": "Giving Roo some independence? Control it from anywhere with Rataz AI Cloud. <learnMoreLink>Learn more</learnMoreLink>.",
+		"autoApprovePowerUser": "Giving ራታዝ some independence? Control it from anywhere with Rataz AI Cloud. <learnMoreLink>Learn more</learnMoreLink>.",
 		"longRunningTask": "This might take a while. Continue from anywhere with Cloud.",
-		"taskList": "Enjoying Roo? Check out Rataz AI Cloud: follow and control your tasks from anywhere, run autonomous Cloud agents, get usage stats and more. <learnMoreLink>Learn more</learnMoreLink>."
+		"taskList": "Enjoying ራታዝ? Check out Rataz AI Cloud: follow and control your tasks from anywhere, run autonomous Cloud agents, get usage stats and more. <learnMoreLink>Learn more</learnMoreLink>."
 	}
 }

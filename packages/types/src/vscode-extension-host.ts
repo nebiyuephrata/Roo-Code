@@ -416,7 +416,12 @@ export interface Command {
  * Webview | CLI -> Extension
  */
 
-export type ClineAskResponse = "yesButtonClicked" | "noButtonClicked" | "messageResponse" | "objectResponse"
+export type ClineAskResponse =
+	| "yesButtonClicked"
+	| "yesButtonClickedAlways"
+	| "noButtonClicked"
+	| "messageResponse"
+	| "objectResponse"
 
 export type AudioType = "notification" | "celebration" | "progress_loop"
 
