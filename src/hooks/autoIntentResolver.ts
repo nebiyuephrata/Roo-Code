@@ -17,13 +17,13 @@ export interface ResolveIntentResult {
 }
 
 const INTENT_BY_GENERIC_PREFIX: Array<{ prefix: string; weight: number }> = [
-	["INT-GEN-001", 5],
-	["INT-GEN-002", 20],
-	["INT-GEN-003", 12],
-	["INT-GEN-004", 16],
-	["INT-GEN-005", 10],
-	["INT-GEN-006", 8],
-].map(([prefix, weight]) => ({ prefix, weight }))
+	{ prefix: "INT-GEN-001", weight: 5 },
+	{ prefix: "INT-GEN-002", weight: 20 },
+	{ prefix: "INT-GEN-003", weight: 12 },
+	{ prefix: "INT-GEN-004", weight: 16 },
+	{ prefix: "INT-GEN-005", weight: 10 },
+	{ prefix: "INT-GEN-006", weight: 8 },
+]
 
 function normalize(text: string): string {
 	return text.toLowerCase().replace(/[^a-z0-9_\-\s]/g, " ")
