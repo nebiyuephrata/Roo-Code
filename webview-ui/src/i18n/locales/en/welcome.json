@@ -13,10 +13,10 @@
 		}
 	},
 	"landing": {
-		"greeting": "Welcome to Roo Code!",
-		"introduction": "With a range of built-in and extensible Modes, Roo Code lets you plan, architect, code, debug and boost your productivity like never before.",
-		"accountMention": "To get started, create your Roo Code Cloud account. Get powerful models, web control, analytics, support and more.",
-		"getStarted": "Create Roo Account",
+		"greeting": "Welcome to Rataz AI!",
+		"introduction": "Rataz AI is an Ethiopian-built, governed AI-native IDE that helps you plan, architect, code, and debug with clear intent and traceability.",
+		"accountMention": "To get started, create your Rataz AI account. Get powerful models, web control, analytics, support and more.",
+		"getStarted": "Create Rataz Account",
 		"noAccount": "or use without an account"
 	},
 	"providerSignup": {
