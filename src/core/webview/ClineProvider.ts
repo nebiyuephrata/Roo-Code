@@ -136,6 +136,8 @@ export class ClineProvider
 	private static activeInstances: Set<ClineProvider> = new Set()
 	private disposables: vscode.Disposable[] = []
 	private webviewDisposables: vscode.Disposable[] = []
+	private governanceWatchDisposables: vscode.Disposable[] = []
+	private governanceRefreshTimer?: NodeJS.Timeout
 	private view?: vscode.WebviewView | vscode.WebviewPanel
 	private clineStack: Task[] = []
 	private codeIndexStatusSubscription?: vscode.Disposable
@@ -619,6 +621,58 @@ export class ClineProvider
 				x.dispose()
 			}
 		}
+		this.clearGovernanceWatchers()
+	}
+
+	private clearGovernanceWatchers() {
+		while (this.governanceWatchDisposables.length) {
+			const x = this.governanceWatchDisposables.pop()
+			if (x) {
+				x.dispose()
+			}
+		}
+		if (this.governanceRefreshTimer) {
+			clearTimeout(this.governanceRefreshTimer)
+			this.governanceRefreshTimer = undefined
+		}
+	}
+
+	private scheduleGovernanceRefresh() {
+		if (this._disposed) {
+			return
+		}
+		if (this.governanceRefreshTimer) {
+			clearTimeout(this.governanceRefreshTimer)
+		}
+		this.governanceRefreshTimer = setTimeout(() => {
+			this.governanceRefreshTimer = undefined
+			void this.postStateToWebviewWithoutTaskHistory().catch((error) => {
+				this.log(
+					`Failed to refresh governance state: ${error instanceof Error ? error.message : String(error)}`,
+				)
+			})
+		}, 180)
+	}
+
+	private setupGovernanceWatchers() {
+		this.clearGovernanceWatchers()
+		const cwd = this.cwd
+		if (!cwd) {
+			return
+		}
+		const root = vscode.Uri.file(cwd)
+		const patterns = [
+			".orchestration/agent_trace.jsonl",
+			".orchestration/active_intent.json",
+			".orchestration/active_intents.yaml",
+		]
+		for (const pattern of patterns) {
+			const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(root, pattern))
+			this.governanceWatchDisposables.push(watcher)
+			this.governanceWatchDisposables.push(watcher.onDidCreate(() => this.scheduleGovernanceRefresh()))
+			this.governanceWatchDisposables.push(watcher.onDidChange(() => this.scheduleGovernanceRefresh()))
+			this.governanceWatchDisposables.push(watcher.onDidDelete(() => this.scheduleGovernanceRefresh()))
+		}
 	}
 
 	async dispose() {
@@ -844,6 +898,7 @@ export class ClineProvider
 		// Sets up an event listener to listen for messages passed from the webview view context
 		// and executes code based on the message that is received.
 		this.setWebviewMessageListener(webviewView.webview)
+		this.setupGovernanceWatchers()
 
 		// Initialize code index status subscription for the current workspace.
 		this.updateCodeIndexStatusSubscription()
@@ -1914,6 +1969,7 @@ export class ClineProvider
 
 	async refreshWorkspace() {
 		this.currentWorkspacePath = getWorkspacePath()
+		this.setupGovernanceWatchers()
 		await this.postStateToWebview()
 	}
 
