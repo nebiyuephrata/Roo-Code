@@ -989,20 +989,17 @@ export const webviewMessageHandler = async (
 			try {
 				const ollamaOptions = {
 					provider: "ollama" as const,
-					baseUrl: ollamaApiConfig.ollamaBaseUrl,
+					baseUrl: ollamaApiConfig.ollamaBaseUrl || "http://127.0.0.1:11434",
 					apiKey: ollamaApiConfig.ollamaApiKey,
 				}
 				// Flush cache and refresh to ensure fresh models.
 				await flushModels(ollamaOptions, true)
 
 				const ollamaModels = await getModels(ollamaOptions)
-
-				if (Object.keys(ollamaModels).length > 0) {
-					provider.postMessageToWebview({ type: "ollamaModels", ollamaModels: ollamaModels })
-				}
+				provider.postMessageToWebview({ type: "ollamaModels", ollamaModels: ollamaModels })
 			} catch (error) {
-				// Silently fail - user hasn't configured Ollama yet
 				console.debug("Ollama models fetch failed:", error)
+				provider.postMessageToWebview({ type: "ollamaModels", ollamaModels: {} })
 			}
 			break
 		}
