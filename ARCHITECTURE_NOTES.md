@@ -3,7 +3,7 @@
 ## Governed AI-Native IDE Extension (TRP1 Week 1)
 
 Author: Ephrata Nebiyu  
-Base Fork: Roo Code  
+Base Fork: Rataz AI  
 Objective: Upgrade Roo into a Governed AI-Native IDE with Intent-Code Traceability
 
 ---
@@ -18,7 +18,7 @@ Traditional Git tracks textual diffs but lacks:
 - Governance enforcement
 - Concurrency protection
 
-This extension upgrades Roo Code into a deterministic, governed AI-native IDE by implementing:
+This extension upgrades Rataz AI into a deterministic, governed AI-native IDE by implementing:
 
 - Intent-first execution
 - Deterministic lifecycle hooks
