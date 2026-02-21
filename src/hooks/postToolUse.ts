@@ -83,6 +83,13 @@ function shouldUpdateIntentMap(context: PostToolContext, semanticMutationClass?:
 	return context.args.__file_existed === false
 }
 
+function countLines(value: string): number {
+	if (value.length === 0) {
+		return 0
+	}
+	return value.split(/\r?\n/).length
+}
+
 export async function postToolUse(context: PostToolContext): Promise<void> {
 	try {
 		const related = Array.isArray(context.args.related)
@@ -110,6 +117,22 @@ export async function postToolUse(context: PostToolContext): Promise<void> {
 			writeHash = await hashFileContent(absolutePath)
 		}
 		const vcs = await resolveVcsMetadata(context.cwd)
+		const relativePath =
+			typeof context.args.__relative_path === "string" ? String(context.args.__relative_path) : undefined
+		const ranges =
+			typeof content === "string" && content.length > 0
+				? [
+						{
+							start_line: 1,
+							end_line: Math.max(1, countLines(content)),
+							content_hash: `sha256:${sha256(content)}`,
+						},
+					]
+				: []
+		const conversationRelated = [
+			...(context.pre.intentId ? [{ type: "specification" as const, value: context.pre.intentId }] : []),
+			...related.map((value) => ({ type: "trace" as const, value })),
+		]
 
 		const record = buildTraceRecord({
 			intent_id: context.pre.intentId,
@@ -127,8 +150,7 @@ export async function postToolUse(context: PostToolContext): Promise<void> {
 				: semanticMutationClass
 					? semanticMutationClass
 					: undefined,
-			file_path:
-				typeof context.args.__relative_path === "string" ? String(context.args.__relative_path) : undefined,
+			file_path: relativePath,
 			content_hash: contentHash,
 			read_hash:
 				context.pre.readHash ?? (typeof context.args.read_hash === "string" ? context.args.read_hash : null),
@@ -138,6 +160,25 @@ export async function postToolUse(context: PostToolContext): Promise<void> {
 				task_id: context.taskId,
 			},
 			vcs,
+			files:
+				relativePath && ranges.length > 0
+					? [
+							{
+								relative_path: relativePath,
+								conversations: [
+									{
+										url: context.taskId,
+										contributor: {
+											entity_type: "AI" as const,
+											model_identifier: "unknown",
+										},
+										ranges,
+										related: conversationRelated,
+									},
+								],
+							},
+						]
+					: [],
 		})
 
 		await appendTraceRecord(context.cwd, record)

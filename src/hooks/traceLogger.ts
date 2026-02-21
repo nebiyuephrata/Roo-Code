@@ -10,6 +10,7 @@ const execFileAsync = promisify(execFile)
 const appendQueueByFile = new Map<string, Promise<void>>()
 
 export interface AgentTraceRecord {
+	id: string
 	trace_id: string
 	timestamp: string
 	intent_id: string | null
@@ -32,9 +33,29 @@ export interface AgentTraceRecord {
 		task_id: string
 	}
 	vcs: {
+		revision_id: string
 		branch?: string
 		commit?: string
 	}
+	files: Array<{
+		relative_path: string
+		conversations: Array<{
+			url: string
+			contributor: {
+				entity_type: "AI" | "HUMAN"
+				model_identifier: string
+			}
+			ranges: Array<{
+				start_line: number
+				end_line: number
+				content_hash: string
+			}>
+			related: Array<{
+				type: "specification" | "intent" | "trace"
+				value: string
+			}>
+		}>
+	}>
 }
 
 export class TraceValidationError extends Error {
@@ -63,11 +84,13 @@ export function hashArgs(args: Record<string, unknown>): string {
 	return sha256(JSON.stringify(args ?? {}))
 }
 
-export function buildTraceRecord(input: Omit<AgentTraceRecord, "trace_id" | "timestamp">): AgentTraceRecord {
+export function buildTraceRecord(input: Omit<AgentTraceRecord, "id" | "trace_id" | "timestamp">): AgentTraceRecord {
+	const generated = randomUUID()
 	return {
-		trace_id: randomUUID(),
-		timestamp: new Date().toISOString(),
 		...input,
+		id: generated,
+		trace_id: generated,
+		timestamp: new Date().toISOString(),
 	}
 }
 
@@ -78,6 +101,9 @@ function isStringArray(value: unknown): value is string[] {
 export function validateTraceRecord(record: AgentTraceRecord): void {
 	if (!record.trace_id || typeof record.trace_id !== "string") {
 		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "trace_id is required and must be a string.")
+	}
+	if (!record.id || typeof record.id !== "string") {
+		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "id is required and must be a string.")
 	}
 	if (!record.timestamp || typeof record.timestamp !== "string" || Number.isNaN(Date.parse(record.timestamp))) {
 		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "timestamp must be a valid ISO date string.")
@@ -115,6 +141,61 @@ export function validateTraceRecord(record: AgentTraceRecord): void {
 	if (!record.vcs || typeof record.vcs !== "object") {
 		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "vcs must be an object.")
 	}
+	if (typeof record.vcs.revision_id !== "string" || record.vcs.revision_id.length === 0) {
+		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "vcs.revision_id is required.")
+	}
+	if (!Array.isArray(record.files)) {
+		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "files must be an array.")
+	}
+	for (const file of record.files) {
+		if (!file || typeof file.relative_path !== "string" || !Array.isArray(file.conversations)) {
+			throw new TraceValidationError(
+				"TRACE_SCHEMA_INVALID",
+				"files entries must contain relative_path and conversations[].",
+			)
+		}
+		for (const conversation of file.conversations) {
+			if (
+				!conversation ||
+				typeof conversation.url !== "string" ||
+				!conversation.contributor ||
+				typeof conversation.contributor.model_identifier !== "string" ||
+				!Array.isArray(conversation.ranges) ||
+				!Array.isArray(conversation.related)
+			) {
+				throw new TraceValidationError(
+					"TRACE_SCHEMA_INVALID",
+					"conversations entries must contain url, contributor, ranges[], related[].",
+				)
+			}
+			for (const range of conversation.ranges) {
+				if (
+					!range ||
+					!Number.isInteger(range.start_line) ||
+					!Number.isInteger(range.end_line) ||
+					typeof range.content_hash !== "string"
+				) {
+					throw new TraceValidationError(
+						"TRACE_SCHEMA_INVALID",
+						"ranges entries must contain integer start_line/end_line and content_hash.",
+					)
+				}
+			}
+			for (const related of conversation.related) {
+				if (
+					!related ||
+					typeof related.type !== "string" ||
+					!["specification", "intent", "trace"].includes(related.type) ||
+					typeof related.value !== "string"
+				) {
+					throw new TraceValidationError(
+						"TRACE_SCHEMA_INVALID",
+						"related entries must contain type and value strings.",
+					)
+				}
+			}
+		}
+	}
 }
 
 async function resolveGitValue(cwd: string, args: string[]): Promise<string | undefined> {
@@ -132,7 +213,7 @@ export async function resolveVcsMetadata(cwd: string): Promise<AgentTraceRecord[
 		resolveGitValue(cwd, ["rev-parse", "--abbrev-ref", "HEAD"]),
 		resolveGitValue(cwd, ["rev-parse", "HEAD"]),
 	])
-	return { branch, commit }
+	return { revision_id: commit ?? "unknown", branch, commit }
 }
 
 export async function appendTraceRecord(cwd: string, record: AgentTraceRecord): Promise<void> {
