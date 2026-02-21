@@ -237,10 +237,22 @@ const ApiOptions = ({
 		status: "idle" | "pending" | "success" | "error"
 		message?: string
 	}>({ status: "idle" })
+	const [ollamaModelCount, setOllamaModelCount] = useState<number | null>(null)
 
-	const { data: routerModels, refetch: refetchRouterModels, isFetching: isFetchingRouterModels } = useRouterModels()
-	const ollamaModelCount = routerModels?.ollama ? Object.keys(routerModels.ollama).length : 0
-	const showOllamaEmptyState = selectedProvider === "ollama" && !isFetchingRouterModels && ollamaModelCount === 0
+	const { data: routerModels, refetch: refetchRouterModels } = useRouterModels()
+	const showOllamaEmptyState = selectedProvider === "ollama" && ollamaModelCount === 0
+
+	useEffect(() => {
+		const onMessage = (event: MessageEvent) => {
+			const message = event.data as ExtensionMessage
+			if (!message || typeof message !== "object") return
+			if (message.type === "ollamaModels") {
+				setOllamaModelCount(Object.keys(message.ollamaModels ?? {}).length)
+			}
+		}
+		window.addEventListener("message", onMessage)
+		return () => window.removeEventListener("message", onMessage)
+	}, [])
 
 	useEffect(() => {
 		setConnectionTest({ status: "idle" })
@@ -347,6 +359,19 @@ const ApiOptions = ({
 					openAiHeaders: headerObject,
 				},
 			})
+			return
+		}
+
+		if (provider === "ollama") {
+			vscode.postMessage({ type: "requestOllamaModels" })
+			return
+		}
+		if (provider === "lmstudio") {
+			vscode.postMessage({ type: "requestLmStudioModels" })
+			return
+		}
+		if (provider === "vscode-lm") {
+			vscode.postMessage({ type: "requestVsCodeLmModels" })
 			return
 		}
 
