@@ -69,6 +69,7 @@ import { GetModelsOptions } from "../../shared/api"
 import { generateSystemPrompt } from "./generateSystemPrompt"
 import { resolveDefaultSaveUri, saveLastExportPath } from "../../utils/export"
 import { getCommand } from "../../utils/commands"
+import { resetFailureCount } from "../../hooks/securityClassifier"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
@@ -549,6 +550,15 @@ export const webviewMessageHandler = async (
 			break
 		case "requestGovernanceStatus":
 			await provider.postStateToWebviewWithoutTaskHistory()
+			break
+		case "resetGovernanceCircuitBreaker":
+			{
+				const taskId = provider.getCurrentTask()?.taskId
+				if (taskId) {
+					resetFailureCount(taskId)
+				}
+				await provider.postStateToWebviewWithoutTaskHistory()
+			}
 			break
 		case "newTask":
 			// Initializing new instance of Cline will make sure that any

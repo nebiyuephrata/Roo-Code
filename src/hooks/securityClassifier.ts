@@ -71,3 +71,11 @@ export function recordSuccess(taskId: string): void {
 export function getFailureCount(taskId: string): number {
 	return failureCounterByTask.get(taskId) ?? 0
 }
+
+export function resetFailureCount(taskId: string): void {
+	failureCounterByTask.set(taskId, 0)
+}
+
+export function getCircuitBreakerThreshold(): number {
+	return CIRCUIT_BREAKER_THRESHOLD
+}

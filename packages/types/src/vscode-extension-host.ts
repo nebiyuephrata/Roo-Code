@@ -250,6 +250,9 @@ export interface GovernanceStatus {
 	lastTraceAt?: string
 	lastTraceStatus?: "success" | "failure" | "blocked"
 	lastToolName?: string
+	circuitBreakerOpen?: boolean
+	circuitBreakerFailureCount?: number
+	circuitBreakerThreshold?: number
 }
 
 export interface GovernanceTraceEntry {
@@ -573,6 +576,7 @@ export interface WebviewMessage {
 		| "openMarkdownPreview"
 		| "updateSettings"
 		| "requestGovernanceStatus"
+		| "resetGovernanceCircuitBreaker"
 		| "allowedCommands"
 		| "getTaskWithAggregatedCosts"
 		| "deniedCommands"
