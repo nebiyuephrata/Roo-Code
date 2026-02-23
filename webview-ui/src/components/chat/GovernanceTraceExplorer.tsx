@@ -3,6 +3,7 @@ import { AlertTriangle } from "lucide-react"
 
 import { useExtensionState } from "@src/context/ExtensionStateContext"
 import { useAppTranslation } from "@src/i18n/TranslationContext"
+import { localizeGovernanceMessage } from "@src/utils/governanceLocalization"
 
 function toLocalTime(iso: string): string {
 	const parsed = new Date(iso)
@@ -138,7 +139,7 @@ export const GovernanceTraceExplorer = () => {
 									</div>
 									{entry.errorMessage && (
 										<div className="mt-1 text-vscode-descriptionForeground truncate">
-											{entry.errorMessage}
+											{localizeGovernanceMessage(entry.errorMessage, t)}
 										</div>
 									)}
 								</div>

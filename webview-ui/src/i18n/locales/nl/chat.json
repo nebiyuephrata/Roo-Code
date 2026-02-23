@@ -522,6 +522,18 @@
 			"success": "success",
 			"blocked": "blocked",
 			"failure": "failure"
+		},
+		"messages": {
+			"circuitBreakerTriggered": "Circuit breaker triggered after repeated failures.",
+			"missingActiveIntentsYaml": "Missing .orchestration/active_intents.yaml",
+			"invalidActiveIntentsMissingList": "Invalid active_intents.yaml: missing intents[]",
+			"invalidActiveIntentsMalformed": "Invalid active_intents.yaml: malformed intent fields",
+			"sensitiveToolDenied": "Sensitive tool denied by human approval.",
+			"staleWrite": "Stale write detected. File changed since read.",
+			"missingMutationClass": "write_to_file is missing valid mutation_class.",
+			"invalidMutationClassType": "write_to_file has invalid mutation_class type.",
+			"noActiveIntent": "No active intent selected.",
+			"scopeViolation": "Path '{{path}}' is not allowed by intent scope."
 		}
 	}
 }

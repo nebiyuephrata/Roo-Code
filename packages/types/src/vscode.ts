@@ -56,6 +56,7 @@ export type CommandId = (typeof commandIds)[number]
  */
 
 export const languages = [
+	"am",
 	"ca",
 	"de",
 	"en",
