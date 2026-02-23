@@ -1208,3 +1208,39 @@ describe("ChatView - Context Condensing Indicator Tests", () => {
 		)
 	})
 })
+
+describe("ChatView - Approve Always Session", () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+	})
+
+	it("shows Approve Always button for list batch tool approvals", async () => {
+		const { getByText } = renderChatView()
+
+		mockPostMessage({
+			clineMessages: [
+				{
+					type: "say",
+					say: "task",
+					ts: Date.now() - 2000,
+					text: "Batch list request",
+				},
+				{
+					type: "ask",
+					ask: "tool",
+					ts: Date.now(),
+					text: JSON.stringify({
+						tool: "listFilesRecursive",
+						path: ".",
+						batchDirs: ["src", "tests"],
+					}),
+					partial: false,
+				},
+			],
+		})
+
+		await waitFor(() => {
+			expect(getByText("chat:approveAlwaysSession.title")).toBeInTheDocument()
+		})
+	})
+})

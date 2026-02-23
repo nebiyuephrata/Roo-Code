@@ -1606,11 +1606,19 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		vscode.postMessage({ type: "condenseTaskContextRequest", text: taskId })
 	}
 
-	const showApproveAlwaysSessionButton =
-		clineAsk === "tool" &&
-		enableButtons &&
-		primaryButtonText === t("chat:approve.title") &&
-		secondaryButtonText === t("chat:reject.title")
+	const showApproveAlwaysSessionButton = useMemo(() => {
+		if (clineAsk !== "tool" || !enableButtons) {
+			return false
+		}
+		const approvalPairs = [
+			[t("chat:approve.title"), t("chat:reject.title")],
+			[t("chat:read-batch.approve.title"), t("chat:read-batch.deny.title")],
+			[t("chat:list-batch.approve.title"), t("chat:list-batch.deny.title")],
+		]
+		return approvalPairs.some(
+			([primary, secondary]) => primaryButtonText === primary && secondaryButtonText === secondary,
+		)
+	}, [clineAsk, enableButtons, primaryButtonText, secondaryButtonText, t])
 
 	const areButtonsVisible = showScrollToBottom || primaryButtonText || secondaryButtonText
 
