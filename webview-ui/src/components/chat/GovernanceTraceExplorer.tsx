@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import { AlertTriangle } from "lucide-react"
 
 import { useExtensionState } from "@src/context/ExtensionStateContext"
+import { useAppTranslation } from "@src/i18n/TranslationContext"
 
 function toLocalTime(iso: string): string {
 	const parsed = new Date(iso)
@@ -22,6 +23,7 @@ function statusClass(status: string): string {
 }
 
 export const GovernanceTraceExplorer = () => {
+	const { t } = useAppTranslation()
 	const { governanceTraceEntries = [] } = useExtensionState()
 	const [intentFilter, setIntentFilter] = useState("all")
 	const [toolFilter, setToolFilter] = useState("all")
@@ -68,7 +70,7 @@ export const GovernanceTraceExplorer = () => {
 		<div className="px-3 pb-2">
 			<div className="rounded-xl border border-vscode-input-border bg-vscode-input-background px-3 py-2">
 				<div className="text-xs font-semibold text-vscode-descriptionForeground uppercase tracking-wide">
-					Trace Explorer
+					{t("chat:governance.traceExplorer")}
 				</div>
 				<div className="mt-2 grid grid-cols-2 gap-2 text-xs">
 					<select
@@ -77,7 +79,7 @@ export const GovernanceTraceExplorer = () => {
 						className="rounded border border-vscode-input-border bg-vscode-input-background px-2 py-1">
 						{intents.map((intent) => (
 							<option key={intent} value={intent}>
-								{intent === "all" ? "All intents" : intent}
+								{intent === "all" ? t("chat:governance.allIntents") : intent}
 							</option>
 						))}
 					</select>
@@ -87,7 +89,7 @@ export const GovernanceTraceExplorer = () => {
 						className="rounded border border-vscode-input-border bg-vscode-input-background px-2 py-1">
 						{tools.map((tool) => (
 							<option key={tool} value={tool}>
-								{tool === "all" ? "All tools" : tool}
+								{tool === "all" ? t("chat:governance.allTools") : tool}
 							</option>
 						))}
 					</select>
@@ -95,10 +97,10 @@ export const GovernanceTraceExplorer = () => {
 						value={statusFilter}
 						onChange={(e) => setStatusFilter(e.target.value)}
 						className="rounded border border-vscode-input-border bg-vscode-input-background px-2 py-1">
-						<option value="all">All statuses</option>
-						<option value="success">success</option>
-						<option value="blocked">blocked</option>
-						<option value="failure">failure</option>
+						<option value="all">{t("chat:governance.allStatuses")}</option>
+						<option value="success">{t("chat:governance.status.success")}</option>
+						<option value="blocked">{t("chat:governance.status.blocked")}</option>
+						<option value="failure">{t("chat:governance.status.failure")}</option>
 					</select>
 					<label className="flex items-center gap-2 px-1">
 						<input
@@ -106,12 +108,12 @@ export const GovernanceTraceExplorer = () => {
 							checked={collisionsOnly}
 							onChange={(e) => setCollisionsOnly(e.target.checked)}
 						/>
-						Collisions only
+						{t("chat:governance.collisionsOnly")}
 					</label>
 				</div>
 				<div className="mt-2 max-h-44 overflow-auto rounded border border-vscode-input-border/60 p-2 text-xs">
 					{filtered.length === 0 ? (
-						<div className="text-vscode-descriptionForeground">No trace entries match current filters.</div>
+						<div className="text-vscode-descriptionForeground">{t("chat:governance.noTraceEntries")}</div>
 					) : (
 						<div className="space-y-2">
 							{filtered.slice(0, 80).map((entry) => (
@@ -130,7 +132,7 @@ export const GovernanceTraceExplorer = () => {
 										{entry.collisionEvent && (
 											<span className="ml-2 inline-flex items-center gap-1 text-amber-400">
 												<AlertTriangle className="size-3" />
-												Collision
+												{t("chat:governance.collision")}
 											</span>
 										)}
 									</div>

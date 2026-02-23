@@ -498,5 +498,30 @@
 		"title": "Dostawca nie jest już obsługiwany",
 		"message": "Przepraszamy, ten dostawca nie jest już obsługiwany. Zauważyliśmy, że bardzo niewielu użytkowników Roo faktycznie z niego korzystało, a my musimy zmniejszyć zakres naszego kodu, aby móc dalej szybko dostarczać i dobrze służyć naszej społeczności. To była naprawdę trudna decyzja, ale pozwala nam skupić się na tym, co jest dla ciebie najważniejsze. Wiemy, że to frustrujące.",
 		"openSettings": "Otwórz ustawienia"
+	},
+	"governance": {
+		"title": "Governance",
+		"refresh": "Refresh",
+		"intent": "Intent",
+		"noActiveIntent": "No active intent",
+		"circuitBreakerOpen": "Circuit breaker open ({{current}}/{{threshold}})",
+		"reset": "Reset",
+		"initialize": "Initialize Governance",
+		"repairYaml": "Repair YAML",
+		"lastTrace": "Last trace",
+		"traceEntries": "Trace entries",
+		"na": "n/a",
+		"traceExplorer": "Trace Explorer",
+		"allIntents": "All intents",
+		"allTools": "All tools",
+		"allStatuses": "All statuses",
+		"collisionsOnly": "Collisions only",
+		"noTraceEntries": "No trace entries match current filters.",
+		"collision": "Collision",
+		"status": {
+			"success": "success",
+			"blocked": "blocked",
+			"failure": "failure"
+		}
 	}
 }

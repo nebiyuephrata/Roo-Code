@@ -498,5 +498,30 @@
 		"title": "Provider non più supportato",
 		"message": "Ci dispiace, questo provider non è più supportato. Abbiamo visto che pochissimi utenti di Roo lo utilizzavano effettivamente e dobbiamo ridurre la portata del nostro codice per continuare a procedere velocemente e servire bene la nostra community. È stata una decisione davvero difficile, ma ci permette di concentrarci su ciò che conta di più per te. Lo sappiamo, è una seccatura.",
 		"openSettings": "Apri impostazioni"
+	},
+	"governance": {
+		"title": "Governance",
+		"refresh": "Refresh",
+		"intent": "Intent",
+		"noActiveIntent": "No active intent",
+		"circuitBreakerOpen": "Circuit breaker open ({{current}}/{{threshold}})",
+		"reset": "Reset",
+		"initialize": "Initialize Governance",
+		"repairYaml": "Repair YAML",
+		"lastTrace": "Last trace",
+		"traceEntries": "Trace entries",
+		"na": "n/a",
+		"traceExplorer": "Trace Explorer",
+		"allIntents": "All intents",
+		"allTools": "All tools",
+		"allStatuses": "All statuses",
+		"collisionsOnly": "Collisions only",
+		"noTraceEntries": "No trace entries match current filters.",
+		"collision": "Collision",
+		"status": {
+			"success": "success",
+			"blocked": "blocked",
+			"failure": "failure"
+		}
 	}
 }

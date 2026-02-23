@@ -3,6 +3,7 @@ import { ShieldCheck, RefreshCw, RotateCcw, Wrench } from "lucide-react"
 
 import { Button } from "@src/components/ui"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
+import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { vscode } from "@src/utils/vscode"
 
 function formatDate(iso?: string): string {
@@ -30,14 +31,15 @@ function traceStatusClass(status?: string): string {
 }
 
 export const GovernanceStatusPanel = () => {
+	const { t } = useAppTranslation()
 	const { governanceStatus, governanceTraceCount } = useExtensionState()
 	const activeIntentLabel = useMemo(() => {
 		if (!governanceStatus?.activeIntentId) {
-			return "No active intent"
+			return t("chat:governance.noActiveIntent")
 		}
 		const suffix = governanceStatus.activeIntentStatus ? ` (${governanceStatus.activeIntentStatus})` : ""
 		return `${governanceStatus.activeIntentId}${suffix}`
-	}, [governanceStatus?.activeIntentId, governanceStatus?.activeIntentStatus])
+	}, [governanceStatus?.activeIntentId, governanceStatus?.activeIntentStatus, t])
 
 	const handleRefresh = useCallback(() => {
 		vscode.postMessage({ type: "requestGovernanceStatus" })
@@ -75,22 +77,25 @@ export const GovernanceStatusPanel = () => {
 				<div className="flex items-center justify-between gap-2">
 					<div className="flex items-center gap-2 text-xs font-semibold text-vscode-descriptionForeground uppercase tracking-wide">
 						<ShieldCheck className="size-3.5" />
-						Governance
+						{t("chat:governance.title")}
 					</div>
 					<Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={handleRefresh}>
 						<RefreshCw className="size-3 mr-1" />
-						Refresh
+						{t("chat:governance.refresh")}
 					</Button>
 				</div>
 				<div className="mt-1 text-sm text-vscode-foreground">
 					<div>
-						<span className="text-vscode-descriptionForeground">Intent:</span> {activeIntentLabel}
+						<span className="text-vscode-descriptionForeground">{t("chat:governance.intent")}:</span>{" "}
+						{activeIntentLabel}
 					</div>
 					{governanceStatus?.circuitBreakerOpen && (
 						<div className="mt-1 flex items-center justify-between gap-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1">
 							<div className="text-xs text-amber-300">
-								Circuit breaker open ({governanceStatus.circuitBreakerFailureCount ?? 0}/
-								{governanceStatus.circuitBreakerThreshold ?? "?"})
+								{t("chat:governance.circuitBreakerOpen", {
+									current: governanceStatus.circuitBreakerFailureCount ?? 0,
+									threshold: governanceStatus.circuitBreakerThreshold ?? "?",
+								})}
 							</div>
 							<Button
 								variant="ghost"
@@ -98,7 +103,7 @@ export const GovernanceStatusPanel = () => {
 								className="h-6 px-2 text-xs"
 								onClick={handleResetCircuitBreaker}>
 								<RotateCcw className="size-3 mr-1" />
-								Reset
+								{t("chat:governance.reset")}
 							</Button>
 						</div>
 					)}
@@ -115,26 +120,27 @@ export const GovernanceStatusPanel = () => {
 								className="h-6 px-2 text-xs"
 								onClick={() => handleBootstrapGovernance(false)}>
 								<Wrench className="size-3 mr-1" />
-								Initialize Governance
+								{t("chat:governance.initialize")}
 							</Button>
 							<Button
 								variant="ghost"
 								size="sm"
 								className="h-6 px-2 text-xs"
 								onClick={() => handleBootstrapGovernance(true)}>
-								Repair YAML
+								{t("chat:governance.repairYaml")}
 							</Button>
 						</div>
 					)}
 					<div className="mt-1">
-						<span className="text-vscode-descriptionForeground">Last trace:</span>{" "}
+						<span className="text-vscode-descriptionForeground">{t("chat:governance.lastTrace")}:</span>{" "}
 						<span className={traceStatusClass(governanceStatus?.lastTraceStatus)}>
-							{governanceStatus?.lastTraceStatus ?? "n/a"}
+							{governanceStatus?.lastTraceStatus ?? t("chat:governance.na")}
 						</span>
 						{governanceStatus?.lastToolName ? ` • ${governanceStatus.lastToolName}` : ""}
 					</div>
 					<div className="text-xs text-vscode-descriptionForeground">
-						Trace entries: {typeof governanceTraceCount === "number" ? governanceTraceCount : "n/a"}
+						{t("chat:governance.traceEntries")}:{" "}
+						{typeof governanceTraceCount === "number" ? governanceTraceCount : t("chat:governance.na")}
 					</div>
 					<div className="text-xs text-vscode-descriptionForeground">
 						{formatDate(governanceStatus?.lastTraceAt)}

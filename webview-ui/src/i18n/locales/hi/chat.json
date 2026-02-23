@@ -498,5 +498,30 @@
 		"title": "प्रदाता अब समर्थित नहीं है",
 		"message": "क्षमा करें, यह प्रदाता अब समर्थित नहीं है। हमने देखा कि बहुत कम Roo उपयोगकर्ता वास्तव में इसका उपयोग कर रहे थे और हमें अपने कोडबेस का दायरा कम करने की आवश्यकता है ताकि हम तेज़ी से काम करना और अपने समुदाय की अच्छी सेवा करना जारी रख सकें। यह वाकई एक कठिन निर्णय था, लेकिन इससे हम उस पर ध्यान केंद्रित कर सकते हैं जो तुम्हारे लिए सबसे ज़्यादा मायने रखता है। हम जानते हैं, यह बुरा लगता है।",
 		"openSettings": "सेटिंग्स खोलें"
+	},
+	"governance": {
+		"title": "Governance",
+		"refresh": "Refresh",
+		"intent": "Intent",
+		"noActiveIntent": "No active intent",
+		"circuitBreakerOpen": "Circuit breaker open ({{current}}/{{threshold}})",
+		"reset": "Reset",
+		"initialize": "Initialize Governance",
+		"repairYaml": "Repair YAML",
+		"lastTrace": "Last trace",
+		"traceEntries": "Trace entries",
+		"na": "n/a",
+		"traceExplorer": "Trace Explorer",
+		"allIntents": "All intents",
+		"allTools": "All tools",
+		"allStatuses": "All statuses",
+		"collisionsOnly": "Collisions only",
+		"noTraceEntries": "No trace entries match current filters.",
+		"collision": "Collision",
+		"status": {
+			"success": "success",
+			"blocked": "blocked",
+			"failure": "failure"
+		}
 	}
 }

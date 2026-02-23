@@ -498,5 +498,30 @@
 		"title": "Proveedor ya no compatible",
 		"message": "Lo sentimos, este proveedor ya no es compatible. Vimos que muy pocos usuarios de Roo lo usaban realmente y necesitamos reducir el alcance de nuestro código para poder seguir avanzando rápido y servir bien a nuestra comunidad en este espacio. Fue una decisión muy difícil, pero nos permite enfocarnos en lo que más te importa. Lo sabemos, es una lástima.",
 		"openSettings": "Abrir configuración"
+	},
+	"governance": {
+		"title": "Governance",
+		"refresh": "Refresh",
+		"intent": "Intent",
+		"noActiveIntent": "No active intent",
+		"circuitBreakerOpen": "Circuit breaker open ({{current}}/{{threshold}})",
+		"reset": "Reset",
+		"initialize": "Initialize Governance",
+		"repairYaml": "Repair YAML",
+		"lastTrace": "Last trace",
+		"traceEntries": "Trace entries",
+		"na": "n/a",
+		"traceExplorer": "Trace Explorer",
+		"allIntents": "All intents",
+		"allTools": "All tools",
+		"allStatuses": "All statuses",
+		"collisionsOnly": "Collisions only",
+		"noTraceEntries": "No trace entries match current filters.",
+		"collision": "Collision",
+		"status": {
+			"success": "success",
+			"blocked": "blocked",
+			"failure": "failure"
+		}
 	}
 }

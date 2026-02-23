@@ -499,5 +499,30 @@
 		"title": "Провайдер больше не поддерживается",
 		"message": "К сожалению, этот провайдер больше не поддерживается. Мы заметили, что очень немногие пользователи Roo действительно им пользовались, и нам нужно сократить объём кодовой базы, чтобы продолжать быстро развиваться и хорошо служить нашему сообществу. Это было очень непростое решение, но оно позволяет нам сосредоточиться на том, что для тебя важнее всего. Мы знаем, что это неприятно.",
 		"openSettings": "Открыть настройки"
+	},
+	"governance": {
+		"title": "Governance",
+		"refresh": "Refresh",
+		"intent": "Intent",
+		"noActiveIntent": "No active intent",
+		"circuitBreakerOpen": "Circuit breaker open ({{current}}/{{threshold}})",
+		"reset": "Reset",
+		"initialize": "Initialize Governance",
+		"repairYaml": "Repair YAML",
+		"lastTrace": "Last trace",
+		"traceEntries": "Trace entries",
+		"na": "n/a",
+		"traceExplorer": "Trace Explorer",
+		"allIntents": "All intents",
+		"allTools": "All tools",
+		"allStatuses": "All statuses",
+		"collisionsOnly": "Collisions only",
+		"noTraceEntries": "No trace entries match current filters.",
+		"collision": "Collision",
+		"status": {
+			"success": "success",
+			"blocked": "blocked",
+			"failure": "failure"
+		}
 	}
 }
