@@ -439,6 +439,16 @@ const ApiOptions = ({
 				return undefined
 		}
 	})()
+	const ensureOllamaDefaults = useCallback(() => {
+		setApiConfigurationField("apiProvider", "ollama")
+		if (!apiConfiguration.ollamaBaseUrl) {
+			setApiConfigurationField("ollamaBaseUrl", "http://localhost:11434")
+		}
+		if (!apiConfiguration.ollamaModelId) {
+			setApiConfigurationField("ollamaModelId", "llama3:latest")
+		}
+		vscode.postMessage({ type: "requestOllamaModels" })
+	}, [apiConfiguration.ollamaBaseUrl, apiConfiguration.ollamaModelId, setApiConfigurationField])
 	const ollamaRecoveryCommand = (() => {
 		const baseUrl = apiConfiguration.ollamaBaseUrl || "http://localhost:11434"
 		return `curl -s ${baseUrl}/api/tags`
@@ -743,17 +753,11 @@ const ApiOptions = ({
 			<div className="rounded-md border border-vscode-panel-border px-3 py-2">
 				<div className="text-xs font-semibold uppercase text-vscode-descriptionForeground">Quick setup</div>
 				<div className="mt-2 flex flex-wrap gap-2">
-					<Button
-						variant="secondary"
-						size="sm"
-						onClick={() => {
-							setApiConfigurationField("apiProvider", "ollama")
-							if (!apiConfiguration.ollamaBaseUrl) {
-								setApiConfigurationField("ollamaBaseUrl", "http://localhost:11434")
-							}
-							vscode.postMessage({ type: "requestOllamaModels" })
-						}}>
+					<Button variant="secondary" size="sm" onClick={ensureOllamaDefaults}>
 						Use Ollama (Local)
+					</Button>
+					<Button variant="secondary" size="sm" onClick={ensureOllamaDefaults}>
+						Use llama3 Defaults
 					</Button>
 					<Button
 						variant="secondary"
@@ -768,6 +772,11 @@ const ApiOptions = ({
 					Ollama requires a local daemon and at least one model installed (e.g. run `ollama serve` and `ollama
 					pull llama3`).
 				</div>
+				{selectedProvider === "ollama" && !apiConfiguration.ollamaModelId && (
+					<div className="mt-2 text-xs text-vscode-errorForeground">
+						No Ollama model selected. Set `ollamaModelId` (recommended: `llama3:latest`).
+					</div>
+				)}
 				{showOllamaEmptyState && (
 					<div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-vscode-errorForeground">
 						<span>{ollamaStatusText}</span>
