@@ -4,6 +4,7 @@ import type { Mock } from "vitest"
 
 // Mock dependencies - must come before imports
 vi.mock("../../../api/providers/fetchers/modelCache")
+vi.mock("../../../api/providers/fetchers/ollama")
 
 vi.mock("../../../integrations/openai-codex/oauth", () => ({
 	openAiCodexOAuthManager: {
@@ -26,10 +27,12 @@ import type { ModelRecord } from "@roo-code/types"
 import { webviewMessageHandler } from "../webviewMessageHandler"
 import type { ClineProvider } from "../ClineProvider"
 import { getModels } from "../../../api/providers/fetchers/modelCache"
+import { probeOllama } from "../../../api/providers/fetchers/ollama"
 const { openAiCodexOAuthManager } = await import("../../../integrations/openai-codex/oauth")
 const { fetchOpenAiCodexRateLimitInfo } = await import("../../../integrations/openai-codex/rate-limits")
 
 const mockGetModels = getModels as Mock<typeof getModels>
+const mockProbeOllama = probeOllama as Mock<typeof probeOllama>
 const mockGetAccessToken = vi.mocked(openAiCodexOAuthManager.getAccessToken)
 const mockGetAccountId = vi.mocked(openAiCodexOAuthManager.getAccountId)
 const mockFetchOpenAiCodexRateLimitInfo = vi.mocked(fetchOpenAiCodexRateLimitInfo)
@@ -225,6 +228,12 @@ describe("webviewMessageHandler - requestOllamaModels", () => {
 				ollamaBaseUrl: "http://localhost:1234",
 			},
 		})
+		mockProbeOllama.mockResolvedValue({
+			status: "ok",
+			baseUrl: "http://localhost:1234",
+			modelCount: 2,
+			httpStatus: 200,
+		})
 	})
 
 	it("successfully fetches models from Ollama", async () => {
@@ -250,10 +259,18 @@ describe("webviewMessageHandler - requestOllamaModels", () => {
 		})
 
 		expect(mockGetModels).toHaveBeenCalledWith({ provider: "ollama", baseUrl: "http://localhost:1234" })
+		expect(mockProbeOllama).toHaveBeenCalledWith("http://localhost:1234", undefined)
 
 		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
 			type: "ollamaModels",
 			ollamaModels: mockModels,
+			values: {
+				status: "ok",
+				baseUrl: "http://localhost:1234",
+				message: undefined,
+				modelCount: 2,
+				httpStatus: 200,
+			},
 		})
 	})
 })

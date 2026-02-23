@@ -1,6 +1,6 @@
 import axios from "axios"
 
-import { getOllamaModels, parseOllamaModel } from "../ollama"
+import { getOllamaModels, parseOllamaModel, probeOllama } from "../ollama"
 import ollamaModelsData from "./fixtures/ollama-model-details.json"
 
 // Mock axios
@@ -78,7 +78,7 @@ describe("Ollama Fetcher", () => {
 			expect(parsedModel!.contextWindow).toBeGreaterThan(0)
 		})
 
-		it("should return null when capabilities is undefined (no tool support)", () => {
+		it("should treat missing capabilities metadata as tool-compatible", () => {
 			const modelDataWithoutCapabilities = {
 				...ollamaModelsData["qwen3-2to16:latest"],
 				capabilities: undefined, // No capabilities array
@@ -86,8 +86,7 @@ describe("Ollama Fetcher", () => {
 
 			const parsedModel = parseOllamaModel(modelDataWithoutCapabilities as any)
 
-			// Models without explicit tools capability are filtered out
-			expect(parsedModel).toBeNull()
+			expect(parsedModel).not.toBeNull()
 		})
 
 		it("should return null when model has vision but no tools capability", () => {
@@ -167,10 +166,17 @@ describe("Ollama Fetcher", () => {
 			const result = await getOllamaModels(baseUrl)
 
 			expect(mockedAxios.get).toHaveBeenCalledTimes(1)
-			expect(mockedAxios.get).toHaveBeenCalledWith(`${baseUrl}/api/tags`, { headers: {} })
+			expect(mockedAxios.get).toHaveBeenCalledWith(
+				`${baseUrl}/api/tags`,
+				expect.objectContaining({ headers: {}, timeout: 6000 }),
+			)
 
 			expect(mockedAxios.post).toHaveBeenCalledTimes(1)
-			expect(mockedAxios.post).toHaveBeenCalledWith(`${baseUrl}/api/show`, { model: modelName }, { headers: {} })
+			expect(mockedAxios.post).toHaveBeenCalledWith(
+				`${baseUrl}/api/show`,
+				{ model: modelName },
+				expect.objectContaining({ headers: {}, timeout: 6000 }),
+			)
 
 			expect(typeof result).toBe("object")
 			expect(result).not.toBeInstanceOf(Array)
@@ -243,7 +249,10 @@ describe("Ollama Fetcher", () => {
 			const result = await getOllamaModels(baseUrl)
 
 			expect(mockedAxios.get).toHaveBeenCalledTimes(1)
-			expect(mockedAxios.get).toHaveBeenCalledWith(`${baseUrl}/api/tags`, { headers: {} })
+			expect(mockedAxios.get).toHaveBeenCalledWith(
+				`${baseUrl}/api/tags`,
+				expect.objectContaining({ headers: {}, timeout: 6000 }),
+			)
 			expect(mockedAxios.post).not.toHaveBeenCalled()
 			expect(result).toEqual({})
 		})
@@ -259,7 +268,10 @@ describe("Ollama Fetcher", () => {
 			const result = await getOllamaModels(baseUrl)
 
 			expect(mockedAxios.get).toHaveBeenCalledTimes(1)
-			expect(mockedAxios.get).toHaveBeenCalledWith(`${baseUrl}/api/tags`, { headers: {} })
+			expect(mockedAxios.get).toHaveBeenCalledWith(
+				`${baseUrl}/api/tags`,
+				expect.objectContaining({ headers: {}, timeout: 6000 }),
+			)
 			expect(mockedAxios.post).not.toHaveBeenCalled()
 			expect(consoleInfoSpy).toHaveBeenCalledWith(`Failed connecting to Ollama at ${baseUrl}`)
 			expect(result).toEqual({})
@@ -317,10 +329,17 @@ describe("Ollama Fetcher", () => {
 			const result = await getOllamaModels(baseUrl)
 
 			expect(mockedAxios.get).toHaveBeenCalledTimes(1)
-			expect(mockedAxios.get).toHaveBeenCalledWith(`${baseUrl}/api/tags`, { headers: {} })
+			expect(mockedAxios.get).toHaveBeenCalledWith(
+				`${baseUrl}/api/tags`,
+				expect.objectContaining({ headers: {}, timeout: 6000 }),
+			)
 
 			expect(mockedAxios.post).toHaveBeenCalledTimes(1)
-			expect(mockedAxios.post).toHaveBeenCalledWith(`${baseUrl}/api/show`, { model: modelName }, { headers: {} })
+			expect(mockedAxios.post).toHaveBeenCalledWith(
+				`${baseUrl}/api/show`,
+				{ model: modelName },
+				expect.objectContaining({ headers: {}, timeout: 6000 }),
+			)
 
 			expect(typeof result).toBe("object")
 			expect(result).not.toBeInstanceOf(Array)
@@ -384,19 +403,39 @@ describe("Ollama Fetcher", () => {
 			const expectedHeaders = { Authorization: `Bearer ${apiKey}` }
 
 			expect(mockedAxios.get).toHaveBeenCalledTimes(1)
-			expect(mockedAxios.get).toHaveBeenCalledWith(`${baseUrl}/api/tags`, { headers: expectedHeaders })
+			expect(mockedAxios.get).toHaveBeenCalledWith(
+				`${baseUrl}/api/tags`,
+				expect.objectContaining({ headers: expectedHeaders, timeout: 6000 }),
+			)
 
 			expect(mockedAxios.post).toHaveBeenCalledTimes(1)
 			expect(mockedAxios.post).toHaveBeenCalledWith(
 				`${baseUrl}/api/show`,
 				{ model: modelName },
-				{ headers: expectedHeaders },
+				expect.objectContaining({ headers: expectedHeaders, timeout: 6000 }),
 			)
 
 			expect(typeof result).toBe("object")
 			expect(result).not.toBeInstanceOf(Array)
 			expect(Object.keys(result).length).toBe(1)
 			expect(result[modelName]).toBeDefined()
+		})
+	})
+
+	describe("probeOllama", () => {
+		it("returns invalid_base_url for malformed base URL", async () => {
+			const result = await probeOllama("not a url")
+			expect(result.status).toBe("invalid_base_url")
+		})
+
+		it("maps ECONNREFUSED to daemon_unreachable", async () => {
+			const econnrefusedError = new Error("Connection refused") as any
+			econnrefusedError.code = "ECONNREFUSED"
+			mockedAxios.get.mockRejectedValueOnce(econnrefusedError)
+
+			const result = await probeOllama("http://localhost:11434")
+			expect(result.status).toBe("daemon_unreachable")
+			expect(result.modelCount).toBe(0)
 		})
 	})
 })

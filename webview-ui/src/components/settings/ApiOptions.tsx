@@ -108,6 +108,26 @@ import { BedrockCustomArn } from "./providers/BedrockCustomArn"
 import { RooBalanceDisplay } from "./providers/RooBalanceDisplay"
 import { buildDocLink } from "@src/utils/docLinks"
 import { BookOpenText } from "lucide-react"
+import { copyToClipboard } from "@src/utils/clipboard"
+
+type OllamaHealthStatus =
+	| "ok"
+	| "empty_models"
+	| "invalid_base_url"
+	| "daemon_unreachable"
+	| "host_not_found"
+	| "unauthorized"
+	| "request_timeout"
+	| "invalid_response"
+	| "request_failed"
+
+interface OllamaHealthInfo {
+	status: OllamaHealthStatus
+	baseUrl?: string
+	message?: string
+	modelCount?: number
+	httpStatus?: number
+}
 
 function getQuickApiKeyField(provider?: string): keyof ProviderSettings | undefined {
 	switch (provider) {
@@ -238,6 +258,7 @@ const ApiOptions = ({
 		message?: string
 	}>({ status: "idle" })
 	const [ollamaModelCount, setOllamaModelCount] = useState<number | null>(null)
+	const [ollamaHealth, setOllamaHealth] = useState<OllamaHealthInfo | null>(null)
 
 	const { data: routerModels, refetch: refetchRouterModels } = useRouterModels()
 	const showOllamaEmptyState = selectedProvider === "ollama" && ollamaModelCount === 0
@@ -248,6 +269,16 @@ const ApiOptions = ({
 			if (!message || typeof message !== "object") return
 			if (message.type === "ollamaModels") {
 				setOllamaModelCount(Object.keys(message.ollamaModels ?? {}).length)
+				const values = message.values as Partial<OllamaHealthInfo> | undefined
+				if (values?.status) {
+					setOllamaHealth({
+						status: values.status,
+						baseUrl: values.baseUrl,
+						message: values.message,
+						modelCount: values.modelCount,
+						httpStatus: values.httpStatus,
+					})
+				}
 			}
 		}
 		window.addEventListener("message", onMessage)
@@ -316,7 +347,18 @@ const ApiOptions = ({
 				case "ollamaModels":
 					if (provider === "ollama") {
 						const count = Object.keys(message.ollamaModels ?? {}).length
-						finish("success", `Connected. ${count} model${count === 1 ? "" : "s"} found.`)
+						const status = (message.values as Partial<OllamaHealthInfo> | undefined)?.status
+						if (status && status !== "ok" && status !== "empty_models") {
+							finish(
+								"error",
+								(message.values as Partial<OllamaHealthInfo>)?.message ||
+									"Failed to reach Ollama daemon.",
+							)
+						} else if (count > 0) {
+							finish("success", `Connected. ${count} model${count === 1 ? "" : "s"} found.`)
+						} else {
+							finish("error", "Connected to Ollama, but no models were returned.")
+						}
 					}
 					break
 				case "lmStudioModels":
@@ -395,6 +437,38 @@ const ApiOptions = ({
 				return apiConfiguration?.litellmBaseUrl
 			default:
 				return undefined
+		}
+	})()
+	const ollamaRecoveryCommand = (() => {
+		const baseUrl = apiConfiguration.ollamaBaseUrl || "http://localhost:11434"
+		return `curl -s ${baseUrl}/api/tags`
+	})()
+	const ollamaStatusText = (() => {
+		if (!showOllamaEmptyState && !ollamaHealth) {
+			return null
+		}
+		if (!ollamaHealth) {
+			return "No Ollama models found. Start the daemon and pull a model, then refresh."
+		}
+		switch (ollamaHealth.status) {
+			case "daemon_unreachable":
+				return `Ollama daemon is not reachable at ${ollamaHealth.baseUrl || "the configured base URL"}.`
+			case "host_not_found":
+				return `Ollama host not found: ${ollamaHealth.baseUrl || "configured URL"}.`
+			case "invalid_base_url":
+				return "Ollama base URL is invalid. Use http://localhost:11434 or http://127.0.0.1:11434."
+			case "unauthorized":
+				return "Ollama rejected authentication. Check your Ollama API key."
+			case "request_timeout":
+				return "Timed out while contacting Ollama. Verify daemon health and network."
+			case "invalid_response":
+				return "Ollama returned an unexpected response from /api/tags."
+			case "request_failed":
+				return ollamaHealth.message || "Failed to fetch Ollama models."
+			case "empty_models":
+				return "Connected to Ollama, but no models are installed. Run `ollama pull llama3` and refresh."
+			default:
+				return "No Ollama models found. Start the daemon and pull a model, then refresh."
 		}
 	})()
 
@@ -696,13 +770,32 @@ const ApiOptions = ({
 				</div>
 				{showOllamaEmptyState && (
 					<div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-vscode-errorForeground">
-						<span>No Ollama models found. Start the daemon and pull a model, then refresh.</span>
+						<span>{ollamaStatusText}</span>
 						<Button
 							variant="secondary"
 							size="sm"
 							onClick={() => vscode.postMessage({ type: "requestOllamaModels" })}>
 							Refresh Ollama Models
 						</Button>
+						<Button variant="secondary" size="sm" onClick={() => copyToClipboard(ollamaRecoveryCommand)}>
+							Copy Health Check
+						</Button>
+						{(apiConfiguration.ollamaBaseUrl || "").includes("localhost") && (
+							<Button
+								variant="secondary"
+								size="sm"
+								onClick={() => setApiConfigurationField("ollamaBaseUrl", "http://127.0.0.1:11434")}>
+								Use 127.0.0.1
+							</Button>
+						)}
+						{(apiConfiguration.ollamaBaseUrl || "").includes("127.0.0.1") && (
+							<Button
+								variant="secondary"
+								size="sm"
+								onClick={() => setApiConfigurationField("ollamaBaseUrl", "http://localhost:11434")}>
+								Use localhost
+							</Button>
+						)}
 					</div>
 				)}
 				<div className="mt-3">
