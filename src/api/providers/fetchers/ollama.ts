@@ -37,6 +37,120 @@ type OllamaModelsResponse = z.infer<typeof OllamaModelsResponseSchema>
 
 type OllamaModelInfoResponse = z.infer<typeof OllamaModelInfoResponseSchema>
 
+export type OllamaProbeStatus =
+	| "ok"
+	| "invalid_base_url"
+	| "daemon_unreachable"
+	| "host_not_found"
+	| "unauthorized"
+	| "request_timeout"
+	| "invalid_response"
+	| "request_failed"
+
+export interface OllamaProbeResult {
+	status: OllamaProbeStatus
+	baseUrl: string
+	modelCount: number
+	message?: string
+	httpStatus?: number
+}
+
+export class OllamaFetchError extends Error {
+	constructor(
+		public readonly status: Exclude<OllamaProbeStatus, "ok">,
+		message: string,
+		public readonly baseUrl: string,
+		public readonly httpStatus?: number,
+	) {
+		super(message)
+	}
+}
+
+function normalizeBaseUrl(baseUrl?: string): string {
+	return !baseUrl || baseUrl.trim() === "" ? "http://localhost:11434" : baseUrl
+}
+
+function buildHeaders(apiKey?: string): Record<string, string> {
+	const headers: Record<string, string> = {}
+	if (apiKey) {
+		headers["Authorization"] = `Bearer ${apiKey}`
+	}
+	return headers
+}
+
+function mapAxiosError(error: unknown, baseUrl: string): OllamaFetchError {
+	const maybeCode = (error as { code?: string } | undefined)?.code
+	if (maybeCode === "ECONNREFUSED") {
+		return new OllamaFetchError("daemon_unreachable", `Failed connecting to Ollama at ${baseUrl}.`, baseUrl)
+	}
+	if (maybeCode === "ENOTFOUND") {
+		return new OllamaFetchError("host_not_found", `Ollama host not found: ${baseUrl}.`, baseUrl)
+	}
+	if (maybeCode === "ETIMEDOUT" || maybeCode === "ECONNABORTED") {
+		return new OllamaFetchError("request_timeout", `Timed out reaching Ollama at ${baseUrl}.`, baseUrl)
+	}
+
+	if (axios.isAxiosError(error)) {
+		const status = error.response?.status
+		if (status === 401 || status === 403) {
+			return new OllamaFetchError("unauthorized", `Ollama authentication failed at ${baseUrl}.`, baseUrl, status)
+		}
+		if (status && status >= 400) {
+			return new OllamaFetchError(
+				"request_failed",
+				`Ollama request failed at ${baseUrl} with status ${status}.`,
+				baseUrl,
+				status,
+			)
+		}
+	}
+	return new OllamaFetchError("request_failed", `Failed to fetch Ollama models from ${baseUrl}.`, baseUrl)
+}
+
+export async function probeOllama(baseUrl = "http://localhost:11434", apiKey?: string): Promise<OllamaProbeResult> {
+	const normalizedBaseUrl = normalizeBaseUrl(baseUrl)
+	if (!URL.canParse(normalizedBaseUrl)) {
+		return {
+			status: "invalid_base_url",
+			baseUrl: normalizedBaseUrl,
+			modelCount: 0,
+			message: "Invalid Ollama base URL.",
+		}
+	}
+
+	try {
+		const response = await axios.get<OllamaModelsResponse>(`${normalizedBaseUrl}/api/tags`, {
+			headers: buildHeaders(apiKey),
+			timeout: 6000,
+		})
+		const parsedResponse = OllamaModelsResponseSchema.safeParse(response.data)
+		if (!parsedResponse.success) {
+			return {
+				status: "invalid_response",
+				baseUrl: normalizedBaseUrl,
+				modelCount: 0,
+				httpStatus: response.status,
+				message: "Ollama /api/tags returned an unexpected response format.",
+			}
+		}
+		return {
+			status: "ok",
+			baseUrl: normalizedBaseUrl,
+			modelCount: parsedResponse.data.models.length,
+			httpStatus: response.status,
+		}
+	} catch (error) {
+		const mapped = mapAxiosError(error, normalizedBaseUrl)
+		return {
+			status: mapped.status,
+			baseUrl: mapped.baseUrl,
+			modelCount: 0,
+			httpStatus: mapped.httpStatus,
+			message: mapped.message,
+		}
+	}
+}
+
 export const parseOllamaModel = (rawModel: OllamaModelInfoResponse): ModelInfo | null => {
 	const contextKey = Object.keys(rawModel.model_info).find((k) => k.includes("context_length"))
 	const contextWindow =
@@ -67,20 +181,16 @@ export async function getOllamaModels(
 	const models: Record<string, ModelInfo> = {}
 
 	// clearing the input can leave an empty string; use the default in that case
-	baseUrl = baseUrl === "" ? "http://localhost:11434" : baseUrl
+	baseUrl = normalizeBaseUrl(baseUrl)
 
 	try {
 		if (!URL.canParse(baseUrl)) {
 			return models
 		}
 
-		// Prepare headers with optional API key
-		const headers: Record<string, string> = {}
-		if (apiKey) {
-			headers["Authorization"] = `Bearer ${apiKey}`
-		}
+		const headers = buildHeaders(apiKey)
 
-		const response = await axios.get<OllamaModelsResponse>(`${baseUrl}/api/tags`, { headers })
+		const response = await axios.get<OllamaModelsResponse>(`${baseUrl}/api/tags`, { headers, timeout: 6000 })
 		const parsedResponse = OllamaModelsResponseSchema.safeParse(response.data)
 		let modelInfoPromises = []
 
@@ -93,15 +203,20 @@ export async function getOllamaModels(
 							{
 								model: ollamaModel.model,
 							},
-							{ headers },
+							{ headers, timeout: 6000 },
 						)
 						.then((ollamaModelInfo) => {
-							const modelInfo = parseOllamaModel(ollamaModelInfo.data)
+							const parsedInfo = OllamaModelInfoResponseSchema.safeParse(ollamaModelInfo.data)
+							if (!parsedInfo.success) {
+								return
+							}
+							const modelInfo = parseOllamaModel(parsedInfo.data)
 							// Only include models that support native tools
 							if (modelInfo) {
 								models[ollamaModel.name] = modelInfo
 							}
-						}),
+						})
+						.catch(() => undefined),
 				)
 			}
 
@@ -109,8 +224,8 @@ export async function getOllamaModels(
 		} else {
 			console.error(`Error parsing Ollama models response: ${JSON.stringify(parsedResponse.error, null, 2)}`)
 		}
-	} catch (error) {
-		if (error.code === "ECONNREFUSED") {
+	} catch (error: any) {
+		if (error?.code === "ECONNREFUSED") {
 			console.warn(`Failed connecting to Ollama at ${baseUrl}`)
 		} else {
 			console.error(

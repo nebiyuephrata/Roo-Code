@@ -64,6 +64,7 @@ import { RooIgnoreController } from "../ignore/RooIgnoreController"
 import { getWorkspacePath } from "../../utils/path"
 import { Mode, defaultModeSlug } from "../../shared/modes"
 import { getModels, flushModels } from "../../api/providers/fetchers/modelCache"
+import { probeOllama } from "../../api/providers/fetchers/ollama"
 import { GetModelsOptions } from "../../shared/api"
 import { generateSystemPrompt } from "./generateSystemPrompt"
 import { resolveDefaultSaveUri, saveLastExportPath } from "../../utils/export"
@@ -997,6 +998,7 @@ export const webviewMessageHandler = async (
 				await flushModels(ollamaOptions, true)
 
 				let ollamaModels = await getModels(ollamaOptions)
+				let diagnostics = await probeOllama(primaryBaseUrl, ollamaApiConfig.ollamaApiKey)
 
 				// Retry loopback hostname variants for environments where localhost resolves to IPv6 only.
 				if (Object.keys(ollamaModels).length === 0) {
@@ -1010,13 +1012,41 @@ export const webviewMessageHandler = async (
 						const retryOptions = { ...ollamaOptions, baseUrl: retryBaseUrl }
 						await flushModels(retryOptions, true)
 						ollamaModels = await getModels(retryOptions)
+						const retryDiagnostics = await probeOllama(retryBaseUrl, ollamaApiConfig.ollamaApiKey)
+						if (retryDiagnostics.status === "ok" || diagnostics.status !== "ok") {
+							diagnostics = retryDiagnostics
+						}
 					}
 				}
 
-				provider.postMessageToWebview({ type: "ollamaModels", ollamaModels: ollamaModels })
+				provider.postMessageToWebview({
+					type: "ollamaModels",
+					ollamaModels: ollamaModels,
+					values: {
+						status:
+							Object.keys(ollamaModels).length > 0
+								? "ok"
+								: diagnostics.status === "ok"
+									? "empty_models"
+									: diagnostics.status,
+						baseUrl: diagnostics.baseUrl,
+						message: diagnostics.message,
+						modelCount: Object.keys(ollamaModels).length,
+						httpStatus: diagnostics.httpStatus,
+					},
+				})
 			} catch (error) {
 				console.debug("Ollama models fetch failed:", error)
-				provider.postMessageToWebview({ type: "ollamaModels", ollamaModels: {} })
+				provider.postMessageToWebview({
+					type: "ollamaModels",
+					ollamaModels: {},
+					values: {
+						status: "request_failed",
+						baseUrl: ollamaApiConfig.ollamaBaseUrl || "http://127.0.0.1:11434",
+						message: error instanceof Error ? error.message : "Unknown Ollama fetch error.",
+						modelCount: 0,
+					},
+				})
 			}
 			break
 		}
