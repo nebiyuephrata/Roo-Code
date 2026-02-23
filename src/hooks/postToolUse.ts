@@ -190,6 +190,7 @@ export async function postToolUse(context: PostToolContext): Promise<void> {
 				context.cwd,
 				context.pre.intentId,
 				typeof context.args.__relative_path === "string" ? String(context.args.__relative_path) : undefined,
+				typeof context.args.content === "string" ? context.args.content : undefined,
 			)
 		}
 
