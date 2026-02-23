@@ -4,6 +4,7 @@ import path from "path"
 import type { GovernanceStatus, GovernanceTraceEntry } from "@roo-code/types"
 
 import { loadIntentCatalog } from "./intentLoader"
+import { canProceed, getCircuitBreakerThreshold, getFailureCount } from "./securityClassifier"
 
 function orchestrationPath(cwd: string, filename: string): string {
 	return path.join(cwd, ".orchestration", filename)
@@ -56,7 +57,7 @@ async function readLastTraceRecord(
 	}
 }
 
-export async function getGovernanceStatusSnapshot(cwd: string): Promise<GovernanceStatus | undefined> {
+export async function getGovernanceStatusSnapshot(cwd: string, taskId?: string): Promise<GovernanceStatus | undefined> {
 	const [activeIntentId, lastTrace] = await Promise.all([readActiveIntentId(cwd), readLastTraceRecord(cwd)])
 
 	let activeIntentTitle: string | undefined
@@ -73,8 +74,13 @@ export async function getGovernanceStatusSnapshot(cwd: string): Promise<Governan
 	}
 
 	if (!activeIntentId && !lastTrace) {
-		return undefined
+		if (!taskId) {
+			return undefined
+		}
 	}
+
+	const failureCount = taskId ? getFailureCount(taskId) : 0
+	const circuitBreakerOpen = taskId ? !canProceed(taskId) : false
 
 	return {
 		activeIntentId,
@@ -83,6 +89,9 @@ export async function getGovernanceStatusSnapshot(cwd: string): Promise<Governan
 		lastTraceAt: lastTrace?.timestamp,
 		lastTraceStatus: lastTrace?.status,
 		lastToolName: lastTrace?.tool_name,
+		circuitBreakerOpen,
+		circuitBreakerFailureCount: failureCount,
+		circuitBreakerThreshold: getCircuitBreakerThreshold(),
 	}
 }
 

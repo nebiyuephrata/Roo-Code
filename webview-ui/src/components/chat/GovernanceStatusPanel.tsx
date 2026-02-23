@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react"
-import { ShieldCheck, RefreshCw } from "lucide-react"
+import { ShieldCheck, RefreshCw, RotateCcw } from "lucide-react"
 
 import { Button } from "@src/components/ui"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
@@ -43,6 +43,10 @@ export const GovernanceStatusPanel = () => {
 		vscode.postMessage({ type: "requestGovernanceStatus" })
 	}, [])
 
+	const handleResetCircuitBreaker = useCallback(() => {
+		vscode.postMessage({ type: "resetGovernanceCircuitBreaker" })
+	}, [])
+
 	useEffect(() => {
 		handleRefresh()
 	}, [handleRefresh])
@@ -64,6 +68,22 @@ export const GovernanceStatusPanel = () => {
 					<div>
 						<span className="text-vscode-descriptionForeground">Intent:</span> {activeIntentLabel}
 					</div>
+					{governanceStatus?.circuitBreakerOpen && (
+						<div className="mt-1 flex items-center justify-between gap-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1">
+							<div className="text-xs text-amber-300">
+								Circuit breaker open ({governanceStatus.circuitBreakerFailureCount ?? 0}/
+								{governanceStatus.circuitBreakerThreshold ?? "?"})
+							</div>
+							<Button
+								variant="ghost"
+								size="sm"
+								className="h-6 px-2 text-xs"
+								onClick={handleResetCircuitBreaker}>
+								<RotateCcw className="size-3 mr-1" />
+								Reset
+							</Button>
+						</div>
+					)}
 					{governanceStatus?.activeIntentTitle && (
 						<div className="text-vscode-descriptionForeground truncate">
 							{governanceStatus.activeIntentTitle}

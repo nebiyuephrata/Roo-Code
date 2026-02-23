@@ -2,6 +2,7 @@ vi.mock("../securityClassifier", () => ({
 	classifyTool: () => "SAFE",
 	canProceed: () => true,
 	getFailureCount: () => 0,
+	recordSuccess: () => undefined,
 	assertCommandSafe: () => undefined,
 }))
 

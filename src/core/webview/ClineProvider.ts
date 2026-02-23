@@ -2247,7 +2247,7 @@ export class ClineProvider
 		const mergedAllowedCommands = this.mergeAllowedCommands(allowedCommands)
 		const mergedDeniedCommands = this.mergeDeniedCommands(deniedCommands)
 		const cwd = this.cwd
-		const governanceStatus = await getGovernanceStatusSnapshot(cwd)
+		const governanceStatus = await getGovernanceStatusSnapshot(cwd, this.getCurrentTask()?.taskId)
 		const governanceTraceEntries = await getGovernanceTraceEntries(cwd, 120)
 		const governanceTraceCount = governanceTraceEntries.length
 

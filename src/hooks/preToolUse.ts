@@ -1,7 +1,14 @@
 import * as vscode from "vscode"
 
 import { captureReadSnapshot, readFileContentSafe, validateWriteFreshness } from "./concurrencyGuard"
-import { canProceed, classifyTool, getFailureCount, assertCommandSafe, type SecurityClass } from "./securityClassifier"
+import {
+	canProceed,
+	classifyTool,
+	getFailureCount,
+	recordSuccess,
+	assertCommandSafe,
+	type SecurityClass,
+} from "./securityClassifier"
 import {
 	getSelectedIntent,
 	loadIntentCatalog,
@@ -126,6 +133,7 @@ export async function preToolUse(context: PreToolContext): Promise<PreToolResult
 				}
 			}
 			const intent = await selectActiveIntent(context.taskId, context.cwd, intentId)
+			recordSuccess(context.taskId)
 			return {
 				ok: true,
 				intentId: intent.id,
