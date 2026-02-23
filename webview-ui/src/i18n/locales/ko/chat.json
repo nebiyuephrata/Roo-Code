@@ -498,5 +498,30 @@
 		"title": "공급자 지원 종료",
 		"message": "죄송합니다. 이 공급자는 더 이상 지원되지 않습니다. 실제로 사용하는 Roo 사용자가 매우 적었고, 빠르게 개발하고 커뮤니티에 잘 봉사하기 위해 코드베이스의 범위를 줄여야 했습니다. 정말 어려운 결정이었지만, 당신에게 가장 중요한 것에 집중할 수 있게 해줍니다. 불편을 드려 죄송합니다.",
 		"openSettings": "설정 열기"
+	},
+	"governance": {
+		"title": "Governance",
+		"refresh": "Refresh",
+		"intent": "Intent",
+		"noActiveIntent": "No active intent",
+		"circuitBreakerOpen": "Circuit breaker open ({{current}}/{{threshold}})",
+		"reset": "Reset",
+		"initialize": "Initialize Governance",
+		"repairYaml": "Repair YAML",
+		"lastTrace": "Last trace",
+		"traceEntries": "Trace entries",
+		"na": "n/a",
+		"traceExplorer": "Trace Explorer",
+		"allIntents": "All intents",
+		"allTools": "All tools",
+		"allStatuses": "All statuses",
+		"collisionsOnly": "Collisions only",
+		"noTraceEntries": "No trace entries match current filters.",
+		"collision": "Collision",
+		"status": {
+			"success": "success",
+			"blocked": "blocked",
+			"failure": "failure"
+		}
 	}
 }
