@@ -98,12 +98,26 @@ function isStringArray(value: unknown): value is string[] {
 	return Array.isArray(value) && value.every((item) => typeof item === "string")
 }
 
+function isUuidV4(value: string): boolean {
+	return /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
+function isSha256Hash(value: string): boolean {
+	return /^sha256:[a-f0-9]{64}$/i.test(value)
+}
+
 export function validateTraceRecord(record: AgentTraceRecord): void {
 	if (!record.trace_id || typeof record.trace_id !== "string") {
 		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "trace_id is required and must be a string.")
 	}
 	if (!record.id || typeof record.id !== "string") {
 		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "id is required and must be a string.")
+	}
+	if (!isUuidV4(record.id)) {
+		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "id must be a UUID v4.")
+	}
+	if (!isUuidV4(record.trace_id)) {
+		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "trace_id must be a UUID v4.")
 	}
 	if (!record.timestamp || typeof record.timestamp !== "string" || Number.isNaN(Date.parse(record.timestamp))) {
 		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "timestamp must be a valid ISO date string.")
@@ -116,6 +130,9 @@ export function validateTraceRecord(record: AgentTraceRecord): void {
 	}
 	if (typeof record.args_summary !== "string" || typeof record.args_hash !== "string") {
 		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "args_summary and args_hash must be strings.")
+	}
+	if (typeof record.args_hash !== "string" || record.args_hash.length !== 64) {
+		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "args_hash must be a 64-character sha256 hex digest.")
 	}
 	if (!(record.approved === null || typeof record.approved === "boolean")) {
 		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "approved must be boolean or null.")
@@ -131,6 +148,15 @@ export function validateTraceRecord(record: AgentTraceRecord): void {
 	}
 	if (!["SAFE", "WRITE", "DESTRUCTIVE"].includes(record.security_class)) {
 		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "security_class is invalid.")
+	}
+	if (record.content_hash && !isSha256Hash(record.content_hash)) {
+		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "content_hash must be in sha256:<64-hex> format.")
+	}
+	if (record.read_hash && !isSha256Hash(record.read_hash)) {
+		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "read_hash must be in sha256:<64-hex> format.")
+	}
+	if (record.write_hash && !isSha256Hash(record.write_hash)) {
+		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "write_hash must be in sha256:<64-hex> format.")
 	}
 	if (!isStringArray(record.related)) {
 		throw new TraceValidationError("TRACE_SCHEMA_INVALID", "related must be an array of strings.")
@@ -159,6 +185,7 @@ export function validateTraceRecord(record: AgentTraceRecord): void {
 				!conversation ||
 				typeof conversation.url !== "string" ||
 				!conversation.contributor ||
+				!["AI", "HUMAN"].includes(conversation.contributor.entity_type) ||
 				typeof conversation.contributor.model_identifier !== "string" ||
 				!Array.isArray(conversation.ranges) ||
 				!Array.isArray(conversation.related)
@@ -178,6 +205,18 @@ export function validateTraceRecord(record: AgentTraceRecord): void {
 					throw new TraceValidationError(
 						"TRACE_SCHEMA_INVALID",
 						"ranges entries must contain integer start_line/end_line and content_hash.",
+					)
+				}
+				if (range.start_line <= 0 || range.end_line < range.start_line) {
+					throw new TraceValidationError(
+						"TRACE_SCHEMA_INVALID",
+						"ranges entries must have positive lines and end_line >= start_line.",
+					)
+				}
+				if (!isSha256Hash(range.content_hash)) {
+					throw new TraceValidationError(
+						"TRACE_SCHEMA_INVALID",
+						"ranges[].content_hash must be in sha256:<64-hex> format.",
 					)
 				}
 			}

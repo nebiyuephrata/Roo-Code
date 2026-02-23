@@ -5,7 +5,7 @@ function validRecord() {
 		intent_id: "INT-001",
 		tool_name: "write_to_file",
 		args_summary: '{"path":"src/a.ts"}',
-		args_hash: "abc123",
+		args_hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		approved: true,
 		decision_reason: "Allowed by preToolUse.",
 		status: "success",
@@ -34,7 +34,7 @@ function validRecord() {
 							{
 								start_line: 1,
 								end_line: 2,
-								content_hash: "sha256:abc",
+								content_hash: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
 							},
 						],
 						related: [{ type: "specification", value: "INT-001" }],
@@ -61,5 +61,24 @@ describe("traceLogger schema", () => {
 		const record = validRecord()
 		;(record.files[0].conversations[0].ranges[0] as any).start_line = "1"
 		expect(() => validateTraceRecord(record)).toThrow("ranges entries must contain integer")
+	})
+
+	it("rejects invalid ranges[].content_hash format", () => {
+		const record = validRecord()
+		record.files[0].conversations[0].ranges[0].content_hash = "abc"
+		expect(() => validateTraceRecord(record)).toThrow("ranges[].content_hash")
+	})
+
+	it("rejects invalid contributor entity type", () => {
+		const record = validRecord()
+		;(record.files[0].conversations[0].contributor as any).entity_type = "BOT"
+		expect(() => validateTraceRecord(record)).toThrow("conversations entries must contain")
+	})
+
+	it("rejects non-uuid trace identifiers", () => {
+		const record = validRecord()
+		record.id = "not-a-uuid"
+		record.trace_id = "not-a-uuid"
+		expect(() => validateTraceRecord(record)).toThrow("id must be a UUID v4.")
 	})
 })
