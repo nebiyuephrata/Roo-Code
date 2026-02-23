@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react"
-import { ShieldCheck, RefreshCw, RotateCcw } from "lucide-react"
+import { ShieldCheck, RefreshCw, RotateCcw, Wrench } from "lucide-react"
 
 import { Button } from "@src/components/ui"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
@@ -47,6 +47,24 @@ export const GovernanceStatusPanel = () => {
 		vscode.postMessage({ type: "resetGovernanceCircuitBreaker" })
 	}, [])
 
+	const handleBootstrapGovernance = useCallback(
+		(repair: boolean) => {
+			vscode.postMessage({ type: "bootstrapGovernanceFiles", bool: repair })
+			handleRefresh()
+		},
+		[handleRefresh],
+	)
+
+	const needsGovernanceBootstrap = useMemo(() => {
+		const error = (governanceStatus?.lastErrorMessage ?? "").toLowerCase()
+		return (
+			!governanceStatus?.activeIntentId ||
+			error.includes("active_intents.yaml") ||
+			error.includes("missing .orchestration") ||
+			error.includes("invalid yaml")
+		)
+	}, [governanceStatus?.activeIntentId, governanceStatus?.lastErrorMessage])
+
 	useEffect(() => {
 		handleRefresh()
 	}, [handleRefresh])
@@ -89,6 +107,25 @@ export const GovernanceStatusPanel = () => {
 							{governanceStatus.activeIntentTitle}
 						</div>
 					)}
+					{needsGovernanceBootstrap && (
+						<div className="mt-1 flex items-center gap-2">
+							<Button
+								variant="ghost"
+								size="sm"
+								className="h-6 px-2 text-xs"
+								onClick={() => handleBootstrapGovernance(false)}>
+								<Wrench className="size-3 mr-1" />
+								Initialize Governance
+							</Button>
+							<Button
+								variant="ghost"
+								size="sm"
+								className="h-6 px-2 text-xs"
+								onClick={() => handleBootstrapGovernance(true)}>
+								Repair YAML
+							</Button>
+						</div>
+					)}
 					<div className="mt-1">
 						<span className="text-vscode-descriptionForeground">Last trace:</span>{" "}
 						<span className={traceStatusClass(governanceStatus?.lastTraceStatus)}>
@@ -102,6 +139,11 @@ export const GovernanceStatusPanel = () => {
 					<div className="text-xs text-vscode-descriptionForeground">
 						{formatDate(governanceStatus?.lastTraceAt)}
 					</div>
+					{governanceStatus?.lastErrorMessage && (
+						<div className="mt-1 text-xs text-vscode-descriptionForeground truncate">
+							{governanceStatus.lastErrorMessage}
+						</div>
+					)}
 				</div>
 			</div>
 		</div>

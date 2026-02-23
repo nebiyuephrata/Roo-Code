@@ -85,6 +85,10 @@ const DEFAULT_INTENT_CATALOG: IntentFileShape = {
 	],
 }
 
+export function getDefaultIntentCatalog(): IntentFileShape {
+	return JSON.parse(JSON.stringify(DEFAULT_INTENT_CATALOG)) as IntentFileShape
+}
+
 export class IntentLoadError extends Error {
 	constructor(
 		public readonly code:

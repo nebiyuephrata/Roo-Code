@@ -22,7 +22,10 @@ async function readActiveIntentId(cwd: string): Promise<string | undefined> {
 
 async function readLastTraceRecord(
 	cwd: string,
-): Promise<{ timestamp?: string; status?: "success" | "failure" | "blocked"; tool_name?: string } | undefined> {
+): Promise<
+	| { timestamp?: string; status?: "success" | "failure" | "blocked"; tool_name?: string; error_message?: string }
+	| undefined
+> {
 	const traceFile = orchestrationPath(cwd, "agent_trace.jsonl")
 	try {
 		const file = await fs.open(traceFile, "r")
@@ -47,6 +50,7 @@ async function readLastTraceRecord(
 				timestamp?: string
 				status?: "success" | "failure" | "blocked"
 				tool_name?: string
+				error_message?: string
 			}
 			return parsed
 		} finally {
@@ -89,6 +93,7 @@ export async function getGovernanceStatusSnapshot(cwd: string, taskId?: string):
 		lastTraceAt: lastTrace?.timestamp,
 		lastTraceStatus: lastTrace?.status,
 		lastToolName: lastTrace?.tool_name,
+		lastErrorMessage: lastTrace?.error_message,
 		circuitBreakerOpen,
 		circuitBreakerFailureCount: failureCount,
 		circuitBreakerThreshold: getCircuitBreakerThreshold(),
