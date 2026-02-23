@@ -33,6 +33,7 @@ const fileWriteTools = new Set([
 ])
 const INTENT_SWITCH_CONFIDENCE_THRESHOLD = 70
 const INTENT_SWITCH_SCORE_GAP_THRESHOLD = 10
+const VALID_MUTATION_CLASSES = new Set(["create", "modify", "replace", "delete", "AST_REFACTOR", "INTENT_EVOLUTION"])
 
 interface HookErrorPayload {
 	error: {
@@ -313,27 +314,33 @@ export async function preToolUse(context: PreToolContext): Promise<PreToolResult
 				}
 
 				if (context.toolName === "write_to_file") {
-					const mutationClass = String(normalizedArgs.mutation_class ?? "")
+					const rawMutationClass = normalizedArgs.mutation_class
+					const hasProvidedMutationClass =
+						typeof rawMutationClass === "string" && rawMutationClass.trim().length > 0
+					const mutationClass =
+						typeof rawMutationClass === "string" ? rawMutationClass.trim() : rawMutationClass
+
 					if (
-						!["create", "modify", "replace", "delete", "AST_REFACTOR", "INTENT_EVOLUTION"].includes(
-							mutationClass,
-						)
+						rawMutationClass !== undefined &&
+						rawMutationClass !== null &&
+						typeof rawMutationClass !== "string"
 					) {
 						return {
 							ok: false,
 							intentId: selectedIntent?.id ?? null,
 							intent: selectedIntent ?? undefined,
 							approved: null,
-							decisionReason: "write_to_file is missing valid mutation_class.",
+							decisionReason: "write_to_file has invalid mutation_class type.",
 							securityClass,
 							startedAt,
 							normalizedArgs,
 							errorPayload: hookError(
 								"MALFORMED_WRITE_REQUEST",
-								"write_to_file requires mutation_class in [create, modify, replace, delete, AST_REFACTOR, INTENT_EVOLUTION].",
+								"write_to_file mutation_class must be a string when provided.",
 							),
 						}
 					}
+
 					const intentIdArg = String(normalizedArgs.intent_id ?? "")
 					if (!intentIdArg || intentIdArg !== selectedIntent?.id) {
 						return {
@@ -358,13 +365,31 @@ export async function preToolUse(context: PreToolContext): Promise<PreToolResult
 						newContent,
 					})
 					normalizedArgs.__semantic_mutation_class = inferredClass
-					if (!isMutationClassCompatible(mutationClass, inferredClass)) {
+					if (!hasProvidedMutationClass) {
+						normalizedArgs.mutation_class = inferredClass
+						normalizedArgs.__mutation_class_auto_filled = true
+					} else if (!VALID_MUTATION_CLASSES.has(String(mutationClass))) {
 						return {
 							ok: false,
 							intentId: selectedIntent?.id ?? null,
 							intent: selectedIntent ?? undefined,
 							approved: null,
-							decisionReason: `Mutation class mismatch. provided='${mutationClass}', inferred='${inferredClass}'.`,
+							decisionReason: "write_to_file is missing valid mutation_class.",
+							securityClass,
+							startedAt,
+							normalizedArgs,
+							errorPayload: hookError(
+								"MALFORMED_WRITE_REQUEST",
+								"write_to_file requires mutation_class in [create, modify, replace, delete, AST_REFACTOR, INTENT_EVOLUTION].",
+							),
+						}
+					} else if (!isMutationClassCompatible(String(mutationClass), inferredClass)) {
+						return {
+							ok: false,
+							intentId: selectedIntent?.id ?? null,
+							intent: selectedIntent ?? undefined,
+							approved: null,
+							decisionReason: `Mutation class mismatch. provided='${String(mutationClass)}', inferred='${inferredClass}'.`,
 							securityClass,
 							startedAt,
 							normalizedArgs,
@@ -372,7 +397,7 @@ export async function preToolUse(context: PreToolContext): Promise<PreToolResult
 							errorPayload: hookError(
 								"MUTATION_CLASS_MISMATCH",
 								"Provided mutation_class does not match semantic classification.",
-								{ provided: mutationClass, inferred: inferredClass },
+								{ provided: String(mutationClass), inferred: inferredClass },
 							),
 						}
 					}
