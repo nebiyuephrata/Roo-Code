@@ -9,6 +9,8 @@ function stripCommentsAndWhitespace(content: string, ext: string): string {
 			.replace(/\/\*[\s\S]*?\*\//g, "")
 			.replace(/\/\/.*$/gm, "")
 			.replace(/\s+/g, "")
+			.replace(/;+/g, "")
+			.replace(/,([}\]])/g, "$1")
 		return result
 	}
 	if ([".py", ".rb", ".sh"].includes(ext)) {
@@ -33,11 +35,45 @@ function extractPublicSymbols(content: string, ext: string): Set<string> {
 	return symbols
 }
 
-function hasNewPublicApi(oldContent: string, newContent: string, ext: string): boolean {
+function extractPublicSignatures(content: string, ext: string): Map<string, string> {
+	const signatures = new Map<string, string>()
+	if ([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"].includes(ext)) {
+		for (const match of content.matchAll(
+			/\bexport\s+(?:async\s+)?function\s+([A-Za-z_]\w*)\s*(\([^)]*\))(?:\s*:\s*[^({]+)?/g,
+		)) {
+			signatures.set(match[1], `function:${match[1]}${match[2].replace(/\s+/g, "")}`)
+		}
+		for (const match of content.matchAll(
+			/\bexport\s+(?:const|let|var)\s+([A-Za-z_]\w*)\s*=\s*(?:async\s*)?\(([^)]*)\)\s*=>/g,
+		)) {
+			signatures.set(match[1], `arrow:${match[1]}(${match[2].replace(/\s+/g, "")})`)
+		}
+		for (const match of content.matchAll(/\bexport\s+class\s+([A-Za-z_]\w*)(?:\s+extends\s+([A-Za-z_]\w*))?/g)) {
+			signatures.set(match[1], `class:${match[1]}:${match[2] ?? ""}`)
+		}
+		for (const match of content.matchAll(/\bexport\s+interface\s+([A-Za-z_]\w*)/g)) {
+			signatures.set(match[1], `interface:${match[1]}`)
+		}
+		for (const match of content.matchAll(/\bexport\s+type\s+([A-Za-z_]\w*)\s*=/g)) {
+			signatures.set(match[1], `type:${match[1]}`)
+		}
+	}
+	return signatures
+}
+
+function hasPublicApiEvolution(oldContent: string, newContent: string, ext: string): boolean {
 	const oldSymbols = extractPublicSymbols(oldContent, ext)
 	const newSymbols = extractPublicSymbols(newContent, ext)
 	for (const symbol of newSymbols) {
 		if (!oldSymbols.has(symbol)) {
+			return true
+		}
+	}
+	const oldSignatures = extractPublicSignatures(oldContent, ext)
+	const newSignatures = extractPublicSignatures(newContent, ext)
+	for (const [symbol, signature] of newSignatures) {
+		const previous = oldSignatures.get(symbol)
+		if (previous && previous !== signature) {
 			return true
 		}
 	}
@@ -64,7 +100,7 @@ export function inferSemanticMutationClass(input: {
 	if (oldNormalized === newNormalized && oldContent !== newContent) {
 		return "AST_REFACTOR"
 	}
-	if (hasNewPublicApi(oldContent, newContent, ext)) {
+	if (hasPublicApiEvolution(oldContent, newContent, ext)) {
 		return "INTENT_EVOLUTION"
 	}
 	if (newContent.length > oldContent.length * 2 || oldContent.length > newContent.length * 2) {
