@@ -250,6 +250,7 @@ export interface GovernanceStatus {
 	lastTraceAt?: string
 	lastTraceStatus?: "success" | "failure" | "blocked"
 	lastToolName?: string
+	lastErrorMessage?: string
 	circuitBreakerOpen?: boolean
 	circuitBreakerFailureCount?: number
 	circuitBreakerThreshold?: number
@@ -577,6 +578,7 @@ export interface WebviewMessage {
 		| "updateSettings"
 		| "requestGovernanceStatus"
 		| "resetGovernanceCircuitBreaker"
+		| "bootstrapGovernanceFiles"
 		| "allowedCommands"
 		| "getTaskWithAggregatedCosts"
 		| "deniedCommands"

@@ -70,6 +70,7 @@ import { generateSystemPrompt } from "./generateSystemPrompt"
 import { resolveDefaultSaveUri, saveLastExportPath } from "../../utils/export"
 import { getCommand } from "../../utils/commands"
 import { resetFailureCount } from "../../hooks/securityClassifier"
+import { bootstrapGovernanceFiles } from "../../hooks/governanceBootstrap"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
@@ -557,6 +558,12 @@ export const webviewMessageHandler = async (
 				if (taskId) {
 					resetFailureCount(taskId)
 				}
+				await provider.postStateToWebviewWithoutTaskHistory()
+			}
+			break
+		case "bootstrapGovernanceFiles":
+			{
+				await bootstrapGovernanceFiles(getCurrentCwd(), { repair: message.bool === true })
 				await provider.postStateToWebviewWithoutTaskHistory()
 			}
 			break
