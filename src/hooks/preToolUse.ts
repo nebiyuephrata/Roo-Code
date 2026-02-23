@@ -24,6 +24,8 @@ const fileWriteTools = new Set([
 	"search_replace",
 	"edit_file",
 ])
+const INTENT_SWITCH_CONFIDENCE_THRESHOLD = 70
+const INTENT_SWITCH_SCORE_GAP_THRESHOLD = 10
 
 interface HookErrorPayload {
 	error: {
@@ -167,26 +169,38 @@ export async function preToolUse(context: PreToolContext): Promise<PreToolResult
 	}
 
 	let selectedIntent = await getSelectedIntent(context.taskId, context.cwd)
+	let switchDecisionReason: string | undefined
+	const resolved = resolveIntentForToolCall({
+		cwd: context.cwd,
+		toolName: context.toolName,
+		args: normalizedArgs,
+		intents: catalog.intents,
+		intentHintText: context.intentHintText,
+	})
 	if (!selectedIntent) {
-		const resolved = resolveIntentForToolCall({
-			cwd: context.cwd,
-			toolName: context.toolName,
-			args: normalizedArgs,
-			intents: catalog.intents,
-			intentHintText: context.intentHintText,
-		})
 		if (resolved.intent) {
 			selectedIntent = await selectActiveIntent(context.taskId, context.cwd, resolved.intent.id)
 		}
+	} else if (resolved.intent && resolved.intent.id !== selectedIntent.id) {
+		const hasPromptSignal = Boolean(context.intentHintText?.trim())
+		const top = resolved.candidates[0]?.score ?? 0
+		const second = resolved.candidates[1]?.score ?? 0
+		const scoreGap = top - second
+		const canSwitch =
+			hasPromptSignal &&
+			resolved.confidence >= INTENT_SWITCH_CONFIDENCE_THRESHOLD &&
+			scoreGap >= INTENT_SWITCH_SCORE_GAP_THRESHOLD
+		if (canSwitch) {
+			const previousIntentId = selectedIntent.id
+			selectedIntent = await selectActiveIntent(context.taskId, context.cwd, resolved.intent.id)
+			normalizedArgs.__intent_auto_switched_from = previousIntentId
+			normalizedArgs.__intent_auto_switched_to = selectedIntent.id
+			normalizedArgs.__intent_auto_switch_confidence = resolved.confidence
+			normalizedArgs.__intent_auto_switch_reason = resolved.reason
+			switchDecisionReason = `Auto-switched intent ${previousIntentId} -> ${selectedIntent.id} (${resolved.reason}).`
+		}
 	}
 	if (!selectedIntent) {
-		const resolved = resolveIntentForToolCall({
-			cwd: context.cwd,
-			toolName: context.toolName,
-			args: normalizedArgs,
-			intents: catalog.intents,
-			intentHintText: context.intentHintText,
-		})
 		return {
 			ok: false,
 			intentId: null,
@@ -379,7 +393,7 @@ export async function preToolUse(context: PreToolContext): Promise<PreToolResult
 		intentId: selectedIntent?.id ?? null,
 		intent: selectedIntent ?? undefined,
 		approved: securityClass === "DESTRUCTIVE" || securityClass === "WRITE" ? true : null,
-		decisionReason: "Allowed by preToolUse.",
+		decisionReason: switchDecisionReason ?? "Allowed by preToolUse.",
 		securityClass,
 		startedAt,
 		normalizedArgs,

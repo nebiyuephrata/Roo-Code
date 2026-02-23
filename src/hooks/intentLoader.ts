@@ -253,9 +253,11 @@ export async function selectActiveIntent(taskId: string, cwd: string, intentId: 
 			intent_id: intentId,
 		})
 	}
+	// Selecting a planned intent starts active execution and must move it to IN_PROGRESS.
+	const selectedIntent = intent.status === "PLANNED" ? await updateIntentStatus(cwd, intentId, "IN_PROGRESS") : intent
 	selectedIntentByTask.set(taskId, intentId)
 	await writeActiveIntentSelection(cwd, intentId, taskId)
-	return intent
+	return selectedIntent
 }
 
 export async function getSelectedIntent(taskId: string, cwd: string): Promise<IntentDefinition | null> {
@@ -289,6 +291,9 @@ export async function clearSelectedIntent(taskId: string, cwd?: string): Promise
 
 export function canTransitionIntentStatus(from: IntentStatus, to: IntentStatus): boolean {
 	if (from === to) {
+		return true
+	}
+	if (from === "PLANNED" && to === "IN_PROGRESS") {
 		return true
 	}
 	if (from === "IN_PROGRESS" && to === "COMPLETED") {

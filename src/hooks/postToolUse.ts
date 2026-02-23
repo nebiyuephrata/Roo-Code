@@ -114,7 +114,12 @@ export async function postToolUse(context: PostToolContext): Promise<void> {
 			typeof content === "string" ? buildSpatialRanges(context.args.__old_content ?? null, content) : []
 		const contentHash = ranges.length > 0 ? sha256(ranges.map((range) => range.content_hash).join("|")) : undefined
 		const conversationRelated = [
-			...(context.pre.intentId ? [{ type: "specification" as const, value: context.pre.intentId }] : []),
+			...(context.pre.intentId
+				? ([
+						{ type: "specification" as const, value: context.pre.intentId },
+						{ type: "intent" as const, value: context.pre.intentId },
+					] as const)
+				: []),
 			...related.map((value) => ({ type: "trace" as const, value })),
 		]
 
