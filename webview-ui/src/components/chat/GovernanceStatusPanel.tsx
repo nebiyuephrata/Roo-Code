@@ -4,6 +4,7 @@ import { ShieldCheck, RefreshCw, RotateCcw, Wrench } from "lucide-react"
 import { Button } from "@src/components/ui"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
 import { useAppTranslation } from "@src/i18n/TranslationContext"
+import { localizeGovernanceMessage } from "@src/utils/governanceLocalization"
 import { vscode } from "@src/utils/vscode"
 
 function formatDate(iso?: string): string {
@@ -147,7 +148,7 @@ export const GovernanceStatusPanel = () => {
 					</div>
 					{governanceStatus?.lastErrorMessage && (
 						<div className="mt-1 text-xs text-vscode-descriptionForeground truncate">
-							{governanceStatus.lastErrorMessage}
+							{localizeGovernanceMessage(governanceStatus.lastErrorMessage, t)}
 						</div>
 					)}
 				</div>
