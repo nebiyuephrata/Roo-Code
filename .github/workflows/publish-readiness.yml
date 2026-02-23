@@ -1,0 +1,42 @@
+name: Publish Readiness
+
+on:
+    workflow_dispatch:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+        types: [opened, reopened, synchronize, ready_for_review]
+
+jobs:
+    quality-gates:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js and pnpm
+              uses: ./.github/actions/setup-node-pnpm
+
+            - name: Check types (extension host)
+              run: pnpm --filter roo-cline check-types
+
+            - name: Check types (webview)
+              run: pnpm --filter @roo-code/vscode-webview check-types
+
+            - name: Governance + trace hook tests
+              working-directory: src
+              run: >
+                  pnpm exec vitest run
+                  hooks/__tests__/intentLoader.lifecycle.spec.ts
+                  hooks/__tests__/traceLogger.schema.spec.ts
+                  hooks/__tests__/mutationClassifier.spec.ts
+                  hooks/__tests__/intentMapUpdater.spec.ts
+
+            - name: Ollama reliability tests
+              working-directory: src
+              run: >
+                  pnpm exec vitest run
+                  api/providers/fetchers/__tests__/ollama.test.ts
+                  core/webview/__tests__/webviewMessageHandler.spec.ts
+
