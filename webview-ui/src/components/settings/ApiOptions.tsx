@@ -129,6 +129,14 @@ interface OllamaHealthInfo {
 	httpStatus?: number
 }
 
+interface ProviderHealthInfo {
+	status?: string
+	message?: string
+	baseUrl?: string
+	httpStatus?: number
+	modelCount?: number
+}
+
 function getQuickApiKeyField(provider?: string): keyof ProviderSettings | undefined {
 	switch (provider) {
 		case "anthropic":
@@ -319,7 +327,21 @@ const ApiOptions = ({
 			switch (message.type) {
 				case "openAiModels":
 					if (provider === "openai") {
-						finish("success", "Connected to OpenAI.")
+						const details = (message.values as ProviderHealthInfo | undefined) ?? {}
+						if (details.status && details.status !== "ok") {
+							finish("error", details.message || `OpenAI connection check failed (${details.status}).`)
+							return
+						}
+						const count = Array.isArray(message.openAiModels) ? message.openAiModels.length : 0
+						if (count > 0) {
+							finish("success", `Connected. ${count} model${count === 1 ? "" : "s"} found.`)
+						} else {
+							finish(
+								"error",
+								details.message ||
+									"Connected, but no models were returned by the OpenAI-compatible endpoint.",
+							)
+						}
 					}
 					break
 				case "routerModels": {
@@ -341,7 +363,12 @@ const ApiOptions = ({
 					if (msgProvider !== provider || message.success !== false) {
 						return
 					}
-					finish("error", message.error || "Failed to fetch models.")
+					const health = message.values as ProviderHealthInfo | undefined
+					if (health?.status) {
+						finish("error", health.message || `${provider} connection check failed (${health.status}).`)
+					} else {
+						finish("error", message.error || "Failed to fetch models.")
+					}
 					break
 				}
 				case "ollamaModels":

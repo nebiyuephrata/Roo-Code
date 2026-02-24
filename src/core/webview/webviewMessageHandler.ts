@@ -65,6 +65,7 @@ import { getWorkspacePath } from "../../utils/path"
 import { Mode, defaultModeSlug } from "../../shared/modes"
 import { getModels, flushModels } from "../../api/providers/fetchers/modelCache"
 import { probeOllama } from "../../api/providers/fetchers/ollama"
+import { probeOpenAiCompatible, probeOpenRouter } from "../../api/providers/fetchers/providerHealth"
 import { GetModelsOptions } from "../../shared/api"
 import { generateSystemPrompt } from "./generateSystemPrompt"
 import { resolveDefaultSaveUri, saveLastExportPath } from "../../utils/export"
@@ -1000,13 +1001,32 @@ export const webviewMessageHandler = async (
 				}),
 			)
 
-			results.forEach((result, index) => {
+			for (const [index, result] of results.entries()) {
 				const routerName = modelFetchPromises[index].key
 
 				if (result.status === "fulfilled") {
 					routerModels[routerName] = result.value.models
 
-					// Ollama and LM Studio settings pages still need these events. They are not fetched here.
+					// OpenRouter fetchers can fail-soft and return empty models. Probe explicitly for diagnostics.
+					if (routerName === "openrouter" && Object.keys(result.value.models).length === 0) {
+						const diagnostics = await probeOpenRouter(
+							apiConfiguration.openRouterBaseUrl,
+							apiConfiguration.openRouterApiKey,
+						)
+						if (diagnostics.status !== "ok") {
+							await provider.postMessageToWebview({
+								type: "singleRouterModelFetchResponse",
+								success: false,
+								error: diagnostics.message,
+								values: {
+									provider: routerName,
+									status: diagnostics.status,
+									baseUrl: diagnostics.baseUrl,
+									httpStatus: diagnostics.httpStatus,
+								},
+							})
+						}
+					}
 				} else {
 					// Handle rejection: Post a specific error message for this provider.
 					const errorMessage = result.reason instanceof Error ? result.reason.message : String(result.reason)
@@ -1021,7 +1041,7 @@ export const webviewMessageHandler = async (
 						values: { provider: routerName },
 					})
 				}
-			})
+			}
 
 			provider.postMessageToWebview({
 				type: "routerModels",
@@ -1180,13 +1200,28 @@ export const webviewMessageHandler = async (
 		}
 		case "requestOpenAiModels":
 			if (message?.values?.baseUrl && message?.values?.apiKey) {
+				const diagnostics = await probeOpenAiCompatible(
+					message?.values?.baseUrl,
+					message?.values?.apiKey,
+					message?.values?.openAiHeaders,
+				)
 				const openAiModels = await getOpenAiModels(
 					message?.values?.baseUrl,
 					message?.values?.apiKey,
 					message?.values?.openAiHeaders,
 				)
 
-				provider.postMessageToWebview({ type: "openAiModels", openAiModels })
+				provider.postMessageToWebview({
+					type: "openAiModels",
+					openAiModels,
+					values: {
+						status: diagnostics.status,
+						message: diagnostics.message,
+						baseUrl: diagnostics.baseUrl,
+						httpStatus: diagnostics.httpStatus,
+						modelCount: diagnostics.modelCount,
+					},
+				})
 			}
 
 			break
