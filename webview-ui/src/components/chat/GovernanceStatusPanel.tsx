@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react"
-import { ShieldCheck, RefreshCw, RotateCcw, Wrench } from "lucide-react"
+import { ShieldCheck, RefreshCw, RotateCcw, Wrench, LifeBuoy } from "lucide-react"
 
 import { Button } from "@src/components/ui"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
@@ -48,6 +48,10 @@ export const GovernanceStatusPanel = () => {
 
 	const handleResetCircuitBreaker = useCallback(() => {
 		vscode.postMessage({ type: "resetGovernanceCircuitBreaker" })
+	}, [])
+
+	const handleRecoverCircuitBreaker = useCallback(() => {
+		vscode.postMessage({ type: "recoverGovernanceCircuitBreaker" })
 	}, [])
 
 	const handleBootstrapGovernance = useCallback(
@@ -108,6 +112,18 @@ export const GovernanceStatusPanel = () => {
 							</Button>
 						</div>
 					)}
+					{governanceStatus?.lastErrorMessage && (
+						<div className="mt-1 flex items-center gap-2">
+							<Button
+								variant="ghost"
+								size="sm"
+								className="h-6 px-2 text-xs"
+								onClick={handleRecoverCircuitBreaker}>
+								<LifeBuoy className="size-3 mr-1" />
+								{t("chat:governance.recover")}
+							</Button>
+						</div>
+					)}
 					{governanceStatus?.activeIntentTitle && (
 						<div className="text-vscode-descriptionForeground truncate">
 							{governanceStatus.activeIntentTitle}
@@ -147,9 +163,21 @@ export const GovernanceStatusPanel = () => {
 						{formatDate(governanceStatus?.lastTraceAt)}
 					</div>
 					{governanceStatus?.lastErrorMessage && (
-						<div className="mt-1 text-xs text-vscode-descriptionForeground truncate">
-							{localizeGovernanceMessage(governanceStatus.lastErrorMessage, t)}
-						</div>
+						<>
+							<div className="mt-1 text-xs text-vscode-descriptionForeground truncate">
+								{localizeGovernanceMessage(governanceStatus.lastErrorMessage, t)}
+							</div>
+							{governanceStatus.recoveryCause && (
+								<div className="text-xs text-vscode-descriptionForeground">
+									{t("chat:governance.recoveryCause")}: {governanceStatus.recoveryCause}
+								</div>
+							)}
+							{governanceStatus.recoverySuggestion && (
+								<div className="text-xs text-vscode-descriptionForeground">
+									{t("chat:governance.recoverySuggestion")}: {governanceStatus.recoverySuggestion}
+								</div>
+							)}
+						</>
 					)}
 				</div>
 			</div>

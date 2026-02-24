@@ -71,6 +71,7 @@ import { resolveDefaultSaveUri, saveLastExportPath } from "../../utils/export"
 import { getCommand } from "../../utils/commands"
 import { resetFailureCount } from "../../hooks/securityClassifier"
 import { bootstrapGovernanceFiles } from "../../hooks/governanceBootstrap"
+import { deriveGovernanceRecoveryPlan } from "../../hooks/governanceRecovery"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
@@ -558,6 +559,33 @@ export const webviewMessageHandler = async (
 				if (taskId) {
 					resetFailureCount(taskId)
 				}
+				await provider.postStateToWebviewWithoutTaskHistory()
+			}
+			break
+		case "recoverGovernanceCircuitBreaker":
+			{
+				const task = provider.getCurrentTask()
+				const taskId = task?.taskId
+				if (taskId) {
+					resetFailureCount(taskId)
+				}
+
+				const status = await provider.getStateToPostToWebview()
+				const plan = deriveGovernanceRecoveryPlan(status.governanceStatus?.lastErrorMessage)
+
+				// Safe auto-healing: create/repair sidecar files when the root cause is known.
+				if (plan.cause === "MISSING_INTENTS_FILE") {
+					await bootstrapGovernanceFiles(getCurrentCwd(), { repair: false })
+				} else if (plan.cause === "INVALID_INTENTS_SCHEMA") {
+					await bootstrapGovernanceFiles(getCurrentCwd(), { repair: true })
+				}
+
+				await provider.postMessageToWebview({
+					type: "invoke",
+					invoke: "setChatBoxMessage",
+					text: plan.safeRerunPrompt,
+				})
+				await provider.postMessageToWebview({ type: "action", action: "focusInput" })
 				await provider.postStateToWebviewWithoutTaskHistory()
 			}
 			break

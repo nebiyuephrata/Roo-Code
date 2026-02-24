@@ -4,6 +4,7 @@ import path from "path"
 import type { GovernanceStatus, GovernanceTraceEntry } from "@roo-code/types"
 
 import { loadIntentCatalog } from "./intentLoader"
+import { deriveGovernanceRecoveryPlan } from "./governanceRecovery"
 import { canProceed, getCircuitBreakerThreshold, getFailureCount } from "./securityClassifier"
 
 function orchestrationPath(cwd: string, filename: string): string {
@@ -85,6 +86,7 @@ export async function getGovernanceStatusSnapshot(cwd: string, taskId?: string):
 
 	const failureCount = taskId ? getFailureCount(taskId) : 0
 	const circuitBreakerOpen = taskId ? !canProceed(taskId) : false
+	const recoveryPlan = deriveGovernanceRecoveryPlan(lastTrace?.error_message)
 
 	return {
 		activeIntentId,
@@ -97,6 +99,9 @@ export async function getGovernanceStatusSnapshot(cwd: string, taskId?: string):
 		circuitBreakerOpen,
 		circuitBreakerFailureCount: failureCount,
 		circuitBreakerThreshold: getCircuitBreakerThreshold(),
+		recoveryCause: recoveryPlan.cause,
+		recoverySuggestion: recoveryPlan.suggestion,
+		recoveryCanAutoRerun: recoveryPlan.canAutoRerun,
 	}
 }
 

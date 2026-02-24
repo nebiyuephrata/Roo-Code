@@ -254,6 +254,19 @@ export interface GovernanceStatus {
 	circuitBreakerOpen?: boolean
 	circuitBreakerFailureCount?: number
 	circuitBreakerThreshold?: number
+	recoveryCause?:
+		| "MISSING_INTENTS_FILE"
+		| "INVALID_INTENTS_SCHEMA"
+		| "NO_ACTIVE_INTENT"
+		| "STALE_WRITE_COLLISION"
+		| "MUTATION_CLASS_MISSING"
+		| "MUTATION_CLASS_INVALID"
+		| "SCOPE_VIOLATION"
+		| "HITL_DENIED"
+		| "CIRCUIT_BREAKER_OPEN"
+		| "UNKNOWN"
+	recoverySuggestion?: string
+	recoveryCanAutoRerun?: boolean
 }
 
 export interface GovernanceTraceEntry {
@@ -578,6 +591,7 @@ export interface WebviewMessage {
 		| "updateSettings"
 		| "requestGovernanceStatus"
 		| "resetGovernanceCircuitBreaker"
+		| "recoverGovernanceCircuitBreaker"
 		| "bootstrapGovernanceFiles"
 		| "allowedCommands"
 		| "getTaskWithAggregatedCosts"
